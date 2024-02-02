@@ -119,10 +119,19 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+
+        binding.tvForgotPassword.setOnClickListener {
+            startForgetPassActvity()
+        }
     }
     fun startActivity()
     {
         startActivity(Intent(this@LoginActivity,HomeActivity::class.java))
+        finish()
+    }
+    fun startForgetPassActvity()
+    {
+        startActivity(Intent(this@LoginActivity,ForgotPasswordActivity::class.java))
         finish()
     }
    /* fun login()

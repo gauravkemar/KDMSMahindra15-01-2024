@@ -316,6 +316,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         }
         if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
             defaultBarcode()
+            //setDefaultScanner()
         }
 
         binding.radioGroup.setOnCheckedChangeListener { buttonView, selected ->
@@ -384,9 +385,9 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
      private fun setDefaultScanner(){
          isRFIDInit = false
          isBarcodeInit = true
-         rfidHandler!!.onPause()
-         rfidHandler!!.onDestroy()
-         Thread.sleep(1000)
+        // rfidHandler!!.onPause()
+         //rfidHandler!!.onDestroy()
+         //Thread.sleep(1000)
          val results2 = EMDKManager.getEMDKManager(this@MainActivity, this)
          if (results2.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
              Log.e(TAG, "EMDKManager object request failed!")
@@ -458,6 +459,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                 currentLatitude = location.latitude
                 currentLongitude = location.longitude
                 println("$currentLatitude-la,   $currentLongitude - lo")
+                Log.d(TAG,"$currentLatitude-la,   $currentLongitude - lo")
                 isLocationAvailable = true
                 updateUIWithLocation(currentLatitude, currentLongitude, isLocationAvailable)
             }

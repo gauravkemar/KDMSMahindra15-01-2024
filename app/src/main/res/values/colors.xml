@@ -41,6 +41,7 @@
     <color name="d_green">#0AA000</color>
     <color name="red">#FF0000</color>
     <color name="blue">#307FFF</color>
+    <color name="dark_blue">#074C85</color>
     <color name="light_blue">#f6f6f6</color>
 
     <color name="radio_normal_color">#10c007</color>

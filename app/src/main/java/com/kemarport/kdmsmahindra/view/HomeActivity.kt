@@ -50,6 +50,9 @@ lateinit var binding:ActivityHomeBinding
                 R.id.vin_confirmation -> {
                     startActivity(Intent(this@HomeActivity, MainActivity::class.java))
                 }
+                R.id.change_password -> {
+                    startActivity(Intent(this@HomeActivity, ChangePasswordActivity::class.java))
+                }
                 R.id.logout -> {
                     showLogoutDialog()
                 }

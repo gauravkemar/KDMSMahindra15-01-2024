@@ -50,6 +50,7 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
     String readername = "RFD8500123";
 
+
     public void init(MainActivity activity) {
         // application context
         context = activity;
@@ -176,7 +177,11 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
             // Based on support available on host device choose the reader type
             InvalidUsageException invalidUsageException = null;
             readers = new Readers(context, ENUM_TRANSPORT.ALL);
-            availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+            try {
+                availableRFIDReaderList = readers.GetAvailableRFIDReaderList();
+            } catch (InvalidUsageException e) {
+                throw new RuntimeException(e);
+            }
             if (invalidUsageException != null) {
                 readers.Dispose();
                 readers = null;
@@ -198,7 +203,11 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
         @Override
         protected String doInBackground(Void... voids) {
             Log.d(TAG, "ConnectionTask");
-            GetAvailableReader();
+            try {
+                GetAvailableReader();
+            } catch (InvalidUsageException e) {
+                throw new RuntimeException(e);
+            }
             if (reader != null)
                 return connect();
             return "Failed to find or connect reader";
@@ -212,7 +221,7 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
         }
     }
 
-    private synchronized void GetAvailableReader() {
+    private synchronized void GetAvailableReader() throws InvalidUsageException {
         Log.d(TAG, "GetAvailableReader");
         if (readers != null) {
             readers.attach(this);

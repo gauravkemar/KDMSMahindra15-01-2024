@@ -1,9 +1,13 @@
 package com.kemarport.kdmsmahindra.repository
 
+import com.kemarport.kdmsmahindra.model.changepassword.ChangePasswordRequest
+import com.kemarport.kdmsmahindra.model.forgotpassword.ForgotPasswordRequest
+import com.kemarport.kdmsmahindra.model.forgotpassword.ResetPasswordRequest
 import com.kemarport.kdmsmahindra.model.login.LoginRequest
 import com.kemarport.kdmsmahindra.model.newapi.ConfirmDealerVehicleDeliveryRequest
 import com.kemarport.kdmsmahindra.model.newapi.VerifyDealerVehicleRequest
 import com.kemarport.mahindrakiosk.api.RetrofitInstance
+
 import retrofit2.http.Header
 
 class KDMSRepository {
@@ -56,5 +60,20 @@ class KDMSRepository {
         @Header("Authorization") bearerToken: String,
         baseUrl: String,
     ) = RetrofitInstance.api(baseUrl).getDeliveredDetails(bearerToken)
+
+    suspend fun changePassword(
+        token: String,
+        baseUrl: String,
+        changePasswordRequest: ChangePasswordRequest
+    ) = RetrofitInstance.api(baseUrl).changePassword(token,changePasswordRequest)
+    suspend fun forgotPassword(
+        baseUrl: String,
+        forgotPasswordRequest: ForgotPasswordRequest,
+    ) = RetrofitInstance.api(baseUrl).forgotPassword(forgotPasswordRequest)
+    suspend fun resetPassword(
+        baseUrl: String,
+        resetPasswordRequest: ResetPasswordRequest,
+    ) = RetrofitInstance.api(baseUrl).resetPassword(resetPasswordRequest)
+
 
 }

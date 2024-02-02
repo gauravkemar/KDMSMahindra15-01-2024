@@ -52,7 +52,8 @@ object Constants {
 
     //const val BASE_URL_LOCAL = "http://rfid-yard-lb-1652367993.ap-south-1.elb.amazonaws.com:82/api/"
 
-    const val BASE_URL_LOCAL = "http://103.240.90.141:5050/Service/api/"
+    const val BASE_URL_LOCAL = "http://103.240.90.141:5050/service/api/"
+    //const val BASE_URL_LOCAL = "http://103.240.90.141:5050/Service/api/"
 
     //merging
     const val VEHICLE_CONFIRMATION_COUNT = "DealerVehicle/GetVehicleConfirmationCountMobile"
@@ -60,7 +61,7 @@ object Constants {
     //const val BASE_URL = "http://rfid-yard-lb-1652367993.ap-south-1.elb.amazonaws.com:82/api/"
 
     const val BASE_URL = "http://103.240.90.141:5050/service/api/"
-    //const val BASE_URL = "http://192.168.1.23:5000/api/"
+    //const val BASE_URL = "http://192.168.1.32:5000/api/"
     //const val BASE_URL = "http://192.168.1.5:5000/api/"
 
 
@@ -89,5 +90,8 @@ object Constants {
     const val CONFIRM_DEALER_VEHICLE_DELIVERY = "MobileService/confirmDealerVehicleDelivery"
     const val GET_DELIVERED_COUNT = "Dashboard/getDeliveredCount"
     const val GET_DELIVERED_DETAILS = "Dashboard/getDeliveredDetails"
+    const val  CHANGE_PASSWORD= "UserManagement/change-password"
+    const val  FORGOT_PASSWORD= "UserManagement/forgot-password"
+    const val  RESET_PASSWORD= "UserManagement/reset-password"
 
 }

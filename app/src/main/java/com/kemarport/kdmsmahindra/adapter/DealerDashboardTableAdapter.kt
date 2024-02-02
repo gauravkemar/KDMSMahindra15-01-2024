@@ -25,7 +25,7 @@ class DealerDashboardTableAdapter(val context: Context, val items: ArrayList<Das
     }
 
     fun convertDateFormat(inputDateString: String): String {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
         val outputFormat = SimpleDateFormat("dd-MM-yyyy hh:mm a", Locale.getDefault())
 
         // Parse the input date string

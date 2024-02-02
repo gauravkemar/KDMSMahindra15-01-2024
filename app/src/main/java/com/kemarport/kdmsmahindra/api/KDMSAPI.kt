@@ -2,9 +2,14 @@ package com.kemarport.mahindrakiosk.api
 
 
 import com.kemarport.kdmsmahindra.model.*
+import com.kemarport.kdmsmahindra.model.changepassword.ChangePasswordRequest
+import com.kemarport.kdmsmahindra.model.changepassword.ChangePasswordResponse
 import com.kemarport.kdmsmahindra.model.dashboard.RFIDCountResponse
 import com.kemarport.kdmsmahindra.model.dashboard.VehicleConfirmationCountResponseItem
 import com.kemarport.kdmsmahindra.model.dashboard.VehicleConfirmationResponseItem
+import com.kemarport.kdmsmahindra.model.forgotpassword.ForgotPasswordRequest
+import com.kemarport.kdmsmahindra.model.forgotpassword.ForgotPasswordResponse
+import com.kemarport.kdmsmahindra.model.forgotpassword.ResetPasswordRequest
 import com.kemarport.kdmsmahindra.model.login.LoginRequest
 import com.kemarport.kdmsmahindra.model.login.LoginResponse
 import com.kemarport.kdmsmahindra.model.newapi.ConfirmDealerVehicleDeliveryRequest
@@ -15,6 +20,7 @@ import com.kemarport.kdmsmahindra.model.newapi.VerifyDealerVehicleRequest
 import com.kemarport.kdmsmahindra.model.newapi.VerifyDealerVehicleResponse
 import com.kemarport.mahindrakiosk.helper.Constants
 import com.kemarport.mahindrakiosk.helper.GeneralResponse
+
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -91,5 +97,22 @@ interface KDMSAPI {
  ): Response<ArrayList<DashboardGetDeliveredDetailsResponse>>
 
 
+ @POST(Constants.CHANGE_PASSWORD)
+ suspend fun changePassword(
+  @Header("Authorization") bearerToken: String,
+  @Body
+  changePasswordRequest: ChangePasswordRequest,
+ ): Response<ChangePasswordResponse>
 
+ @POST(Constants.FORGOT_PASSWORD)
+ suspend fun forgotPassword(
+  @Body
+  forgotPasswordRequest: ForgotPasswordRequest,
+ ): Response<ForgotPasswordResponse>
+
+ @POST(Constants.RESET_PASSWORD)
+ suspend fun resetPassword(
+  @Body
+  resetPasswordRequest: ResetPasswordRequest,
+ ): Response<GeneralResponse>
 }
