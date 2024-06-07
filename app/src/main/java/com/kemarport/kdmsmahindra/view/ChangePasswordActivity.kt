@@ -35,6 +35,9 @@ class ChangePasswordActivity : AppCompatActivity() {
     private var userName: String? = ""
     private var token: String? = ""
     private lateinit var progress: ProgressDialog
+    private var baseUrl: String =""
+    private var serverIpSharedPrefText: String? = null
+    private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_change_password)
@@ -48,6 +51,9 @@ class ChangePasswordActivity : AppCompatActivity() {
         userDetails = session.getUserDetails()
         userName = userDetails[Constants.KEY_USER_NAME].toString()
         token = userDetails[Constants.KEY_JWT_TOKEN].toString()
+        serverIpSharedPrefText = userDetails!![Constants.KEY_SERVER_IP].toString()
+        serverHttpPrefText = userDetails!![Constants.KEY_HTTP].toString()
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
         val kdmsRepository = KDMSRepository()
         val viewModelProviderFactory =
             LoginVMPF(application, kdmsRepository)
@@ -239,7 +245,7 @@ class ChangePasswordActivity : AppCompatActivity() {
                     ChangePasswordRequest(edConfirmPassword, edOldPassword, edNewPassword, it)
                 }
                 ?.let {
-                    viewModel.changePassword(token!!,Constants.BASE_URL, it)
+                    viewModel.changePassword(token!!,baseUrl, it)
                 }
 
         } else {

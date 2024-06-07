@@ -52,15 +52,15 @@ object Constants {
 
     //const val BASE_URL_LOCAL = "http://rfid-yard-lb-1652367993.ap-south-1.elb.amazonaws.com:82/api/"
 
-    const val BASE_URL_LOCAL = "http://103.240.90.141:5050/service/api/"
-    //const val BASE_URL_LOCAL = "http://103.240.90.141:5050/Service/api/"
+    //const val BASE_URL_LOCAL = "http://103.240.90.141:5050/service/api/"
+    const val BASE_URL_LOCAL = "http://103.240.90.141:5050/Service/api/"
 
     //merging
     const val VEHICLE_CONFIRMATION_COUNT = "DealerVehicle/GetVehicleConfirmationCountMobile"
     const val VEHICLE_RFID_COUNT = "DealerVehicle/GetScanRFIDCount"
-    //const val BASE_URL = "http://rfid-yard-lb-1652367993.ap-south-1.elb.amazonaws.com:82/api/"
+    //const val BASE_URL_LOCAL = "http://rfid-yard-lb-1652367993.ap-south-1.elb.amazonaws.com:82/api/"
 
-    const val BASE_URL = "http://103.240.90.141:5050/service/api/"
+    //const val BASE_URL = "http://103.240.90.141:5050/service/api/"
     //const val BASE_URL = "http://192.168.1.32:5000/api/"
     //const val BASE_URL = "http://192.168.1.5:5000/api/"
 
@@ -81,7 +81,8 @@ object Constants {
     const val ROLE_NAME = "roleName"
     const val KEY_REFRESH_TOKEN = "refreshToken"
     const val KEY_ISLOGGEDIN = "isLoggedIn"
-
+    const val KEY_HTTP = "http"
+    const val KEY_SERVER_IP = "serverIp"
 
 
 

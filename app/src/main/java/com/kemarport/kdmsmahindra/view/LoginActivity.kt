@@ -20,12 +20,17 @@ import com.kemarport.mahindrakiosk.helper.Constants
 import com.kemarport.mahindrakiosk.helper.Resource
 import com.kemarport.mahindrakiosk.helper.Utils
 import es.dmoral.toasty.Toasty
+import java.util.HashMap
 
 class LoginActivity : AppCompatActivity() {
     lateinit var binding:ActivityLoginBinding
     private lateinit var viewModel: LoginVM
     private lateinit var progress: ProgressDialog
     private lateinit var session: SessionManager
+    private lateinit var userDetails: HashMap<String, String?>
+    private var baseUrl: String =""
+    private var serverIpSharedPrefText: String? = null
+    private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -45,7 +50,10 @@ class LoginActivity : AppCompatActivity() {
         val viewModelProviderFactory = LoginVMPF(application, kymsRepository)
         viewModel = ViewModelProvider(this, viewModelProviderFactory)[LoginVM ::class.java]
         session = SessionManager(this)
-
+        userDetails = session.getUserDetails()
+        serverIpSharedPrefText = userDetails!![Constants.KEY_SERVER_IP].toString()
+        serverHttpPrefText = userDetails!![Constants.KEY_HTTP].toString()
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
 
         binding.btnLogin.setOnClickListener {
             login()
@@ -134,6 +142,7 @@ class LoginActivity : AppCompatActivity() {
         startActivity(Intent(this@LoginActivity,ForgotPasswordActivity::class.java))
         finish()
     }
+    
    /* fun login()
     {
         try {
@@ -168,8 +177,9 @@ class LoginActivity : AppCompatActivity() {
            // Validate user input
            val validationMessage = validateInput(userId, password)
            if (validationMessage == null) {
+               //Utils.getDeviceId(this@LoginActivity)
                val loginRequest = LoginRequest(Utils.getDeviceId(this@LoginActivity),password, userId )
-               viewModel.login(Constants.BASE_URL, loginRequest)
+               viewModel.login(baseUrl, loginRequest)
            } else {
                showErrorMessage(validationMessage)
            }

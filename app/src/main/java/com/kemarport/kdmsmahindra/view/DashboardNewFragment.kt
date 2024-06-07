@@ -42,7 +42,9 @@ class DashboardNewFragment : Fragment() {
     private var token: String? = ""
     private lateinit var dealerDetails: HashMap<String, String?>
     private lateinit var session: SessionManager
-
+    private var baseUrl: String =""
+    private var serverIpSharedPrefText: String? = null
+    private var serverHttpPrefText: String? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -53,6 +55,9 @@ class DashboardNewFragment : Fragment() {
         dealerDetails = session.getUserDetails()
         dealerCode = dealerDetails["dealerCode"]
         token = dealerDetails["jwtToken"]
+        serverIpSharedPrefText = dealerDetails!![Constants.KEY_SERVER_IP].toString()
+        serverHttpPrefText = dealerDetails!![Constants.KEY_HTTP].toString()
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
 
         val kdmsRepository = KDMSRepository()
         val application = requireActivity().application
@@ -132,8 +137,8 @@ class DashboardNewFragment : Fragment() {
 
     private fun callApi(){
         try {
-            viewModel.getDeliveredCount (token!!,Constants.BASE_URL_LOCAL)
-            viewModel.getDeliveredDetails (token!!,Constants.BASE_URL_LOCAL )
+            viewModel.getDeliveredCount (token!!,baseUrl)
+            viewModel.getDeliveredDetails (token!!,baseUrl )
 
         }
         catch (e:Exception)

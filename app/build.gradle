@@ -73,7 +73,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
     implementation 'com.google.maps.android:android-maps-utils:0.3.4'
 
-    //implementation files('libs/RfidApi3Lib.aar')
+
 
     //Emdk Barcode Scanner
     implementation 'com.symbol:emdk:9.1.1'
@@ -82,4 +82,5 @@ dependencies {
     implementation 'androidx.drawerlayout:drawerlayout:1.1.1'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation project(':RFIDAPI3Library')
+
 }

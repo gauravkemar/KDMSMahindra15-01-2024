@@ -53,8 +53,7 @@ import java.util.*
 
 
 class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.StatusListener,
-    Scanner.DataListener, RFIDHandler.ResponseHandlerInterface
- {
+    Scanner.DataListener, RFIDHandler.ResponseHandlerInterface {
     lateinit var binding: ActivityMainBinding
     private lateinit var progress: ProgressDialog
     private var dealerCode: String? = ""
@@ -89,6 +88,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         rfidHandler = RFIDHandler()
         rfidHandler!!.init(this)
     }
+
     var isRFIDInit = false
     var isBarcodeInit = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -118,11 +118,15 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
 
     ////scanner
-     var resumeFlag = false
-     var emdkManager: EMDKManager? = null
-     var barcodeManager: BarcodeManager? = null
-     var scanner: Scanner? = null
+    var resumeFlag = false
+    var emdkManager: EMDKManager? = null
+    var barcodeManager: BarcodeManager? = null
+    var scanner: Scanner? = null
 
+
+    private var baseUrl: String =""
+    private var serverIpSharedPrefText: String? = null
+    private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -139,6 +143,9 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         userRoleCheck = dealerDetails[Constants.ROLE_NAME]
         userName = dealerDetails[Constants.KEY_USER_NAME]
         locationId = dealerDetails[Constants.LOCATION_ID]
+        serverIpSharedPrefText = dealerDetails!![Constants.KEY_SERVER_IP].toString()
+        serverHttpPrefText = dealerDetails!![Constants.KEY_HTTP].toString()
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
 
         binding.radioGroup.check(binding.radioBtn2.getId())
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -167,19 +174,17 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                 is Resource.Success -> {
                     hideProgressBar()
                     response.data?.let { resultResponse ->
-                       /* Toasty.success(this, response.data.responseMessage, Toasty.LENGTH_SHORT)
-                                    .show()*/
-                        var message=resultResponse.message
-                        var status=resultResponse.status
-                        if(message!=null)
-                        {
+                        /* Toasty.success(this, response.data.responseMessage, Toasty.LENGTH_SHORT)
+                                     .show()*/
+                        var message = resultResponse.message
+                        var status = resultResponse.status
+                        if (message != null) {
                             Toasty.warning(this, resultResponse.message, Toasty.LENGTH_SHORT)
                                 .show()
                         }
 
-                        if(resultResponse !=null)
-                        {
-                            val rfid=binding.edVinScan.text.toString().trim()
+                        if (resultResponse != null) {
+                            val rfid = binding.edVinScan.text.toString().trim()
                             binding.tvVinValue.setText(resultResponse.vin)
                             binding.tvModelCodeValue.setText(resultResponse.modelCode)
                             binding.tvColorValue.setText(resultResponse.colorDescription)
@@ -203,6 +208,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
                     }
                 }
+
                 is Resource.Error -> {
                     hideProgressBar()
                     clearText()
@@ -215,7 +221,8 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     response.message?.let { resultResponse ->
                         Toasty.error(this, resultResponse, Toasty.LENGTH_SHORT).show()
                         if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
-                            resultResponse == Constants.CONFIG_ERROR) {
+                            resultResponse == Constants.CONFIG_ERROR
+                        ) {
                             showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
@@ -224,43 +231,41 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
                     }
                 }
+
                 is Resource.Loading -> {
                     showProgressBar()
                 }
+
                 else -> {
 
                 }
             }
         }
 
-        viewModel.postConfirmDealerVehicleDeliveryMutable .observe(this) { response ->
+        viewModel.postConfirmDealerVehicleDeliveryMutable.observe(this) { response ->
             when (response) {
                 is Resource.Success -> {
                     hideProgressBar()
 
                     response.data?.let { resultResponse ->
-                     /*   if(resultResponse.responseMessage!=null)
-                        {
-                            Toasty.success(this, resultResponse.responseMessage, Toasty.LENGTH_SHORT)
-                                .show()
-                        }
-                        else
-                        {
-                            Toasty.success(this, resultResponse.errorMessage, Toasty.LENGTH_SHORT)
-                                .show()
-                        }*/
-                        var status=resultResponse.status
-                        if (status=="Failed")
-                        {
+                        /*   if(resultResponse.responseMessage!=null)
+                           {
+                               Toasty.success(this, resultResponse.responseMessage, Toasty.LENGTH_SHORT)
+                                   .show()
+                           }
+                           else
+                           {
+                               Toasty.success(this, resultResponse.errorMessage, Toasty.LENGTH_SHORT)
+                                   .show()
+                           }*/
+                        var status = resultResponse.status
+                        if (status == "Failed") {
                             Toasty.error(this, resultResponse.message, Toasty.LENGTH_SHORT)
                                 .show()
-                        }
-                        else if (status=="Success"){
+                        } else if (status == "Success") {
                             Toasty.success(this, resultResponse.message, Toasty.LENGTH_SHORT)
                                 .show()
-                        }
-                        else
-                        {
+                        } else {
                             Toasty.warning(this, resultResponse.message, Toasty.LENGTH_SHORT)
                                 .show()
                         }
@@ -270,6 +275,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     }
 
                 }
+
                 is Resource.Error -> {
                     hideProgressBar()
                     ViewCompat.setBackgroundTintList(
@@ -280,7 +286,8 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     response.message?.let { resultResponse ->
                         Toasty.error(this, resultResponse, Toasty.LENGTH_SHORT).show()
                         if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
-                            resultResponse == Constants.CONFIG_ERROR) {
+                            resultResponse == Constants.CONFIG_ERROR
+                        ) {
                             showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
@@ -292,9 +299,11 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
                     }
                 }
+
                 is Resource.Loading -> {
                     showProgressBar()
                 }
+
                 else -> {
 
                 }
@@ -304,7 +313,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
 
         binding.clearText.setOnClickListener {
-                clearText()
+            clearText()
         }
 
         if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
@@ -315,8 +324,8 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
             binding.radioGroup.visibility = View.GONE
         }
         if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
-            defaultBarcode()
-            //setDefaultScanner()
+            //defaultBarcode()
+            setDefaultScanner()
         }
 
         binding.radioGroup.setOnCheckedChangeListener { buttonView, selected ->
@@ -337,67 +346,71 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         }
 
     }
-     private fun logout(){
-         session.logoutUser()
-         startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-         finish()
-     }
-     fun showCustomDialog(title: String?, message: String?) {
-         var alertDialog: AlertDialog? = null
-         val builder: AlertDialog.Builder
-         if (title.equals(""))
-             builder = AlertDialog.Builder(this)
-                 .setMessage(Html.fromHtml(message))
-                 .setIcon(android.R.drawable.ic_dialog_alert)
-                 .setPositiveButton("Okay") { dialogInterface, which ->
-                     alertDialog?.dismiss()
-                 }
-         else if (message.equals(""))
-             builder = AlertDialog.Builder(this)
-                 .setTitle(title)
-                 .setIcon(android.R.drawable.ic_dialog_alert)
-                 .setPositiveButton("Okay") { dialogInterface, which ->
-                     alertDialog?.dismiss()
-                 }
-         else
-             builder = AlertDialog.Builder(this)
-                 .setTitle(title)
-                 .setMessage(message)
-                 .setIcon(android.R.drawable.ic_dialog_alert)
-                 .setPositiveButton("Okay") { dialogInterface, which ->
-                     if (title.equals("Session Expired")) {
-                         logout()
-                     } else {
-                         alertDialog?.dismiss()
-                     }
-                 }
-         alertDialog = builder.create()
-         alertDialog.setCancelable(false)
-         alertDialog.show()
-     }
-     private fun defaultBarcode(){
-         isRFIDInit = true
-         isBarcodeInit = false
-         deInitScanner()
-         Thread.sleep(1000)
-         initReader()
-     }
-     private fun setDefaultScanner(){
-         isRFIDInit = false
-         isBarcodeInit = true
+
+    private fun logout() {
+        session.logoutUser()
+        startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+        finish()
+    }
+
+    fun showCustomDialog(title: String?, message: String?) {
+        var alertDialog: AlertDialog? = null
+        val builder: AlertDialog.Builder
+        if (title.equals(""))
+            builder = AlertDialog.Builder(this)
+                .setMessage(Html.fromHtml(message))
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Okay") { dialogInterface, which ->
+                    alertDialog?.dismiss()
+                }
+        else if (message.equals(""))
+            builder = AlertDialog.Builder(this)
+                .setTitle(title)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Okay") { dialogInterface, which ->
+                    alertDialog?.dismiss()
+                }
+        else
+            builder = AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Okay") { dialogInterface, which ->
+                    if (title.equals("Session Expired")) {
+                        logout()
+                    } else {
+                        alertDialog?.dismiss()
+                    }
+                }
+        alertDialog = builder.create()
+        alertDialog.setCancelable(false)
+        alertDialog.show()
+    }
+
+    private fun defaultBarcode() {
+        isRFIDInit = true
+        isBarcodeInit = false
+        //deInitScanner()
+        Thread.sleep(1000)
+        initReader()
+    }
+
+    private fun setDefaultScanner() {
+        isRFIDInit = false
+        isBarcodeInit = true
         // rfidHandler!!.onPause()
-         //rfidHandler!!.onDestroy()
-         //Thread.sleep(1000)
-         val results2 = EMDKManager.getEMDKManager(this@MainActivity, this)
-         if (results2.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
-             Log.e(TAG, "EMDKManager object request failed!")
-         } else {
-             Log.e(
-                 TAG,
-                 "EMDKManager object initialization is   in   progress......."
-             )
-         }
-     }
+        //rfidHandler!!.onDestroy()
+        //Thread.sleep(1000)
+        val results2 = EMDKManager.getEMDKManager(this@MainActivity, this)
+        if (results2.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
+            Log.e(TAG, "EMDKManager object request failed!")
+        } else {
+            Log.e(
+                TAG,
+                "EMDKManager object initialization is   in   progress......."
+            )
+        }
+    }
 
     //////location
     private fun startLocationProviderCheck() {
@@ -434,11 +447,11 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     private fun checkLocationProviderStatus() {
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             // Location provider is turned off, update UI accordingly
-           /* currentLatitude = 0.0
-            currentLongitude = 0.0*/
-           /* runOnUiThread(Runnable {
-                binding.indicator.setImageResource(R.drawable.ic_circl_red)
-            })*/
+            /* currentLatitude = 0.0
+             currentLongitude = 0.0*/
+            /* runOnUiThread(Runnable {
+                 binding.indicator.setImageResource(R.drawable.ic_circl_red)
+             })*/
         }
     }
 
@@ -459,7 +472,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                 currentLatitude = location.latitude
                 currentLongitude = location.longitude
                 println("$currentLatitude-la,   $currentLongitude - lo")
-                Log.d(TAG,"$currentLatitude-la,   $currentLongitude - lo")
+                Log.d(TAG, "$currentLatitude-la,   $currentLongitude - lo")
                 isLocationAvailable = true
                 updateUIWithLocation(currentLatitude, currentLongitude, isLocationAvailable)
             }
@@ -532,27 +545,31 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
             }
             //val vinId = binding.edVinScan.text.toString()
             if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
-               /* Toasty.success(
-                    this@MainActivity,
-                    "You are inside geofence",
-                    Toasty.LENGTH_SHORT
-                ).show()*/
+                /* Toasty.success(
+                     this@MainActivity,
+                     "You are inside geofence",
+                     Toasty.LENGTH_SHORT
+                 ).show()*/
                 if (vin.isNotEmpty()) {
-                   /* viewModel.validateVinConfirm(Constants.DMS_BASE_URL,
-                        DMSVehicleConfirmationRequest(dealerCode!!,"Delivered",createUniqueIDWithDateTime(),vin))*/
-                 /*   locationId?.let {
-                        ConfirmDealerVehicleDeliveryRequest("$currentLatitude,$currentLongitude",dealerCode!!,
-                            "Delivered",userName!!,vin,
-                            it.toInt())
-                    }?.let {
-                        viewModel.postConfirmDealerVehicleDelivery (token!!, Constants.BASE_URL_LOCAL,
-                            it
+                    /* viewModel.validateVinConfirm(Constants.DMS_BASE_URL,
+                         DMSVehicleConfirmationRequest(dealerCode!!,"Delivered",createUniqueIDWithDateTime(),vin))*/
+                    /*   locationId?.let {
+                           ConfirmDealerVehicleDeliveryRequest("$currentLatitude,$currentLongitude",dealerCode!!,
+                               "Delivered",userName!!,vin,
+                               it.toInt())
+                       }?.let {
+                           viewModel.postConfirmDealerVehicleDelivery (token!!, Constants.BASE_URL_LOCAL,
+                               it
+                           )
+                       }*/
+                    viewModel.postConfirmDealerVehicleDelivery(
+                        token!!, baseUrl,
+                        ConfirmDealerVehicleDeliveryRequest(
+                            "$currentLatitude,$currentLongitude", dealerCode!!,
+                            "Delivered", userName!!, "", vin,
+                            locationId!!.toInt()
                         )
-                    }*/
-                    viewModel.postConfirmDealerVehicleDelivery (token!!, Constants.BASE_URL_LOCAL,
-                        ConfirmDealerVehicleDeliveryRequest("$currentLatitude,$currentLongitude",dealerCode!!,
-                            "Delivered",userName!!,"",vin,
-                            locationId!!.toInt()))
+                    )
                 } else {
                     Toasty.warning(
                         this@MainActivity,
@@ -578,18 +595,35 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
     fun submitVinBarcode(data: String?) {
         try {
-          /*  if (isLocationEnabled()) {
-                checkLocationPermission()
-            } else {
-                openLocationSettings()
-            }*/
+            /*  if (isLocationEnabled()) {
+                  checkLocationPermission()
+              } else {
+                  openLocationSettings()
+              }*/
             if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
-                viewModel.postVerifyDealerVehicle (token!!, Constants.BASE_URL_LOCAL, VerifyDealerVehicleRequest(data.toString(),"" ))
-               /* viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
-                    GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
-                runOnUiThread(Runnable {
-                    binding.edVinScan.setText(data)
-                })
+                if(dealerCode!=null)
+                {
+                    viewModel.postVerifyDealerVehicle(
+                        token!!,
+                        baseUrl,
+                        VerifyDealerVehicleRequest(data.toString(), "",dealerCode!!)
+                    )
+                    /* viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
+                         GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
+                    runOnUiThread(Runnable {
+                        binding.edVinScan.setText(data)
+                    })
+                }else {
+                    runOnUiThread(Runnable {
+                        Toasty.warning(
+                            this@MainActivity,
+                            "Dealer Code Not found!!",
+                            Toasty.LENGTH_SHORT
+                        ).show()
+                    })
+
+                }
+
 
             } else {
                 runOnUiThread(Runnable {
@@ -612,16 +646,35 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
         }
     }
-     fun submitVinRFID(data: String?) {
+
+    fun submitVinRFID(data: String?) {
         try {
             if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
-                viewModel.postVerifyDealerVehicle (token!!, Constants.BASE_URL_LOCAL
-                    ,VerifyDealerVehicleRequest(data.toString(),""))
-          /*      viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
-                    GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
-                runOnUiThread(Runnable {
-                    binding.edVinScan.setText(data)
-                })
+
+                if(dealerCode!=null)
+                {
+                    viewModel.postVerifyDealerVehicle(
+                        token!!,
+                        baseUrl,
+                        VerifyDealerVehicleRequest(data.toString(), "",dealerCode!!)
+                    )
+                    /*      viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
+                              GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
+                    runOnUiThread(Runnable {
+                        binding.edVinScan.setText(data)
+                    })
+                }
+                else {
+                    runOnUiThread(Runnable {
+                        Toasty.warning(
+                            this@MainActivity,
+                            "Dealer Code Not Found!!",
+                            Toasty.LENGTH_SHORT
+                        ).show()
+                    })
+
+                }
+
 
             } else {
                 runOnUiThread(Runnable {
@@ -672,19 +725,8 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         return PolyUtil.containsLocation(point, polygon, geodesic)
     }
 
-     override fun onStart() {
-         super.onStart()
-         if (resumeFlag) {
-             resumeFlag = false
-             if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
-                 //initBarcodeManager()
-                 //initScanner()
-             }
-         }
-     }
-    ///Emdk scanner
-    override fun onResume() {
-        super.onResume()
+    override fun onStart() {
+        super.onStart()
         if (resumeFlag) {
             resumeFlag = false
             if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
@@ -693,6 +735,21 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
             }
         }
     }
+
+    ///Emdk scanner
+    override fun onResume() {
+        super.onResume()
+        if (resumeFlag) {
+            resumeFlag = false
+            if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
+                //initBarcodeManager()
+                //initScanner()
+                initReader()
+            }
+
+        }
+    }
+
     override fun handleTagdata(tagData: Array<TagData>) {
         val sb = StringBuilder()
         sb.append(tagData[0].tagID)
@@ -704,36 +761,39 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         }
         submitVinRFID(tagData[0].tagID.toString())
     }
-  override fun onDestroy() {
-      super.onDestroy()
-      binding.unbind()
-      if (isRFIDInit) {
-          rfidHandler!!.onDestroy()
-      }
-      if (isBarcodeInit) {
-          deInitScanner()
-      }
-      stopLocationProviderCheck()
-  }
 
-     override fun onPostResume() {
-         super.onPostResume()
-         if (isRFIDInit) {
-             val status = rfidHandler!!.onResume()
-             Toast.makeText(this@MainActivity, status, Toast.LENGTH_SHORT).show()
-         }
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.unbind()
+        if (isRFIDInit) {
+            rfidHandler!!.onDestroy()
+        }
+        if (isBarcodeInit) {
+            deInitScanner()
+        }
+        stopLocationProviderCheck()
+    }
 
-     }
-     override fun onPause() {
-         super.onPause()
-         if (isRFIDInit) {
-             rfidHandler!!.onPause()
-         }
-         if (isBarcodeInit) {
-             deInitScanner()
-         }
-         resumeFlag = true
-     }
+    override fun onPostResume() {
+        super.onPostResume()
+        if (isRFIDInit) {
+            val status = rfidHandler!!.onResume()
+            Toast.makeText(this@MainActivity, status, Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isRFIDInit) {
+            rfidHandler!!.onPause()
+        }
+        if (isBarcodeInit) {
+            deInitScanner()
+        }
+        resumeFlag = true
+    }
+
     fun performInventory() {
         rfidHandler!!.performInventory()
     }
@@ -741,138 +801,146 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     fun stopInventory() {
         rfidHandler!!.stopInventory()
     }
+
     override fun handleTriggerPress(pressed: Boolean) {
         if (pressed) {
             performInventory()
         } else stopInventory()
 
     }
-     fun createUniqueIDWithDateTime(): String {
-         val currentTime = Date()
-         val formatter = SimpleDateFormat("yyyyMMddHHmmss")
-         val formattedDateTime = formatter.format(currentTime)
-         val randomPart = Random.nextInt(1000) // Add randomness to avoid collisions
-         return "$formattedDateTime$randomPart"
-     }
 
-
-//new emd
-override fun onOpened(emdkManager: EMDKManager?) {
-    if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
-        this.emdkManager = emdkManager
-        //initBarcodeManager()
-        //initScanner()
+    fun createUniqueIDWithDateTime(): String {
+        val currentTime = Date()
+        val formatter = SimpleDateFormat("yyyyMMddHHmmss")
+        val formattedDateTime = formatter.format(currentTime)
+        val randomPart = Random.nextInt(1000) // Add randomness to avoid collisions
+        return "$formattedDateTime$randomPart"
     }
-}
 
-     override fun onClosed() {
-         if (emdkManager != null) {
-             emdkManager!!.release()
-             emdkManager = null
-         }
-     }
 
-     fun initBarcodeManager() {
-         barcodeManager = emdkManager!!.getInstance(EMDKManager.FEATURE_TYPE.BARCODE) as BarcodeManager
-         if (barcodeManager == null) {
-             Toast.makeText(
-                 this@MainActivity,
-                 "Barcode scanning is not supported.",
-                 Toast.LENGTH_LONG
-             ).show()
-             finish()
-         }
-     }
+    //new emd
+    override fun onOpened(emdkManager: EMDKManager?) {
+        if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
+            this.emdkManager = emdkManager
+            //initBarcodeManager()
+            //initScanner()
+        }
+    }
 
-     fun initScanner() {
-         if (scanner == null) {
-             barcodeManager =
-                 emdkManager?.getInstance(EMDKManager.FEATURE_TYPE.BARCODE) as BarcodeManager
-             scanner = barcodeManager!!.getDevice(BarcodeManager.DeviceIdentifier.DEFAULT)
-             scanner?.addDataListener(this)
-             scanner?.addStatusListener(this)
-             scanner?.triggerType = Scanner.TriggerType.HARD
-             try {
-                 scanner?.enable()
-             } catch (e: ScannerException) {
-                 e.printStackTrace()
-             }
-         }
-     }
-     fun deInitScanner() {
-         if (scanner != null) {
-             try {
-                 scanner!!.release()
-             } catch (e: Exception) {
-             }
-             scanner = null
-         }
-     }
+    override fun onClosed() {
+        if (emdkManager != null) {
+            emdkManager!!.release()
+            emdkManager = null
+        }
+    }
 
-     override fun onData(scanDataCollection: ScanDataCollection?) {
-         var dataStr: String? = ""
-         if (scanDataCollection != null && scanDataCollection.result == ScannerResults.SUCCESS) {
-             val scanData = scanDataCollection.scanData
-             for (data in scanData) {
-                 val barcodeData = data.data
-                 val labelType = data.labelType
-                 dataStr = barcodeData
-             }
-             submitVinBarcode(dataStr)
-             runOnUiThread(Runnable {
-                 binding.edVinScan.setText(dataStr)
-             })
-         }
-     }
+    fun initBarcodeManager() {
+        barcodeManager =
+            emdkManager!!.getInstance(EMDKManager.FEATURE_TYPE.BARCODE) as BarcodeManager
+        if (barcodeManager == null) {
+            Toast.makeText(
+                this@MainActivity,
+                "Barcode scanning is not supported.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        }
+    }
 
-     override fun onStatus(statusData: StatusData) {
-         val state = statusData.state
-         var statusStr = ""
-         when (state) {
-             StatusData.ScannerStates.IDLE -> {
-                 statusStr = statusData.friendlyName + " is   enabled and idle..."
-                 setConfig()
-                 try {
-                     scanner!!.read()
-                 } catch (e: ScannerException) {
-                 }
-             }
-             StatusData.ScannerStates.WAITING -> statusStr = "Scanner is waiting for trigger press..."
-             StatusData.ScannerStates.SCANNING -> statusStr = "Scanning..."
-             StatusData.ScannerStates.DISABLED -> {}
-             StatusData.ScannerStates.ERROR -> statusStr = "An error has occurred."
-             else -> {}
-         }
-         setStatusText(statusStr)
-     }
+    fun initScanner() {
+        if (scanner == null) {
+            barcodeManager =
+                emdkManager?.getInstance(EMDKManager.FEATURE_TYPE.BARCODE) as BarcodeManager
+            scanner = barcodeManager!!.getDevice(BarcodeManager.DeviceIdentifier.DEFAULT)
+            scanner?.addDataListener(this)
+            scanner?.addStatusListener(this)
+            scanner?.triggerType = Scanner.TriggerType.HARD
+            try {
+                scanner?.enable()
+            } catch (e: ScannerException) {
+                e.printStackTrace()
+            }
+        }
+    }
 
-     private fun setConfig() {
-         if (scanner != null) {
-             try {
-                 val config = scanner!!.config
-                 if (config.isParamSupported("config.scanParams.decodeHapticFeedback")) {
-                     config.scanParams.decodeHapticFeedback = true
-                 }
-                 scanner!!.config = config
-             } catch (e: ScannerException) {
-                 Log.e(TAG, e.message!!)
-             }
-         }
-     }
+    fun deInitScanner() {
+        if (scanner != null) {
+            try {
+                scanner!!.release()
+            } catch (e: Exception) {
+            }
+            scanner = null
+        }
+    }
 
-     fun setStatusText(msg: String) {
-         Log.e(TAG, "StatusText: $msg")
-     }
+    override fun onData(scanDataCollection: ScanDataCollection?) {
+        var dataStr: String? = ""
+        if (scanDataCollection != null && scanDataCollection.result == ScannerResults.SUCCESS) {
+            val scanData = scanDataCollection.scanData
+            for (data in scanData) {
+                val barcodeData = data.data
+                val labelType = data.labelType
+                dataStr = barcodeData
+            }
+            submitVinBarcode(dataStr)
+            runOnUiThread(Runnable {
+                binding.edVinScan.setText(dataStr)
+            })
+        }
+    }
 
-     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-         when (item.itemId) {
-             android.R.id.home -> {
-                 onBackPressed()
-                 return true
-             }
-             else -> return super.onOptionsItemSelected(item)
-         }
-     }
+    override fun onStatus(statusData: StatusData) {
+        val state = statusData.state
+        var statusStr = ""
+        when (state) {
+            StatusData.ScannerStates.IDLE -> {
+                statusStr = statusData.friendlyName + " is   enabled and idle..."
+                setConfig()
+                try {
+                    scanner!!.read()
+                } catch (e: ScannerException) {
+                }
+            }
+
+            StatusData.ScannerStates.WAITING -> statusStr =
+                "Scanner is waiting for trigger press..."
+
+            StatusData.ScannerStates.SCANNING -> statusStr = "Scanning..."
+            StatusData.ScannerStates.DISABLED -> {}
+            StatusData.ScannerStates.ERROR -> statusStr = "An error has occurred."
+            else -> {}
+        }
+        setStatusText(statusStr)
+    }
+
+    private fun setConfig() {
+        if (scanner != null) {
+            try {
+                val config = scanner!!.config
+                if (config.isParamSupported("config.scanParams.decodeHapticFeedback")) {
+                    config.scanParams.decodeHapticFeedback = true
+                }
+                scanner!!.config = config
+            } catch (e: ScannerException) {
+                Log.e(TAG, e.message!!)
+            }
+        }
+    }
+
+    fun setStatusText(msg: String) {
+        Log.e(TAG, "StatusText: $msg")
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                return true
+            }
+
+            else -> return super.onOptionsItemSelected(item)
+        }
+    }
 }
 
 

@@ -35,6 +35,9 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private var userName: String? = ""
     private lateinit var progress: ProgressDialog
 
+    private var baseUrl: String =""
+    private var serverIpSharedPrefText: String? = null
+    private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_forgot_password)
@@ -49,6 +52,9 @@ class ForgotPasswordActivity : AppCompatActivity() {
         session = SessionManager(this)
         userDetails = session.getUserDetails()
         userName = userDetails[Constants.KEY_USER_NAME].toString()
+        serverIpSharedPrefText = userDetails!![Constants.KEY_SERVER_IP].toString()
+        serverHttpPrefText = userDetails!![Constants.KEY_HTTP].toString()
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
         val kdmsRepository = KDMSRepository()
         val viewModelProviderFactory =
             LoginVMPF(application, kdmsRepository)
@@ -264,7 +270,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
             val validateForgotPassInput = validateForgotPassInput(emailId, userName)
             if (validateForgotPassInput == null) {
                 viewModel.forgotPassword(
-                    Constants.BASE_URL,
+                    baseUrl,
                     ForgotPasswordRequest("", userName)
                 )
             } else {
@@ -291,7 +297,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 validateInput(token, newPassword, confirmPassword)
             if (validateForgotPassInput == null) {
                 viewModel.resetPassword(
-                    Constants.BASE_URL,
+                    baseUrl,
                     ResetPasswordRequest(confirmPassword, newPassword, token)
                 )
             } else {

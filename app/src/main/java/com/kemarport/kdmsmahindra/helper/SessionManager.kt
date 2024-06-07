@@ -3,6 +3,8 @@ package com.kemarport.kdmsmahindra.helper
 import android.content.Context
 import android.content.SharedPreferences
 import com.kemarport.mahindrakiosk.helper.Constants
+import com.kemarport.mahindrakiosk.helper.Constants.KEY_HTTP
+import com.kemarport.mahindrakiosk.helper.Constants.KEY_SERVER_IP
 
 class SessionManager(context: Context) {
     // Shared Preferences
@@ -87,7 +89,8 @@ class SessionManager(context: Context) {
         user[Constants.KEY_JWT_TOKEN] = sharedPrefer.getString(Constants.KEY_JWT_TOKEN, null)
         user[Constants.ROLE_NAME] = sharedPrefer.getString(Constants.ROLE_NAME, null)
         user[Constants.LOCATION_ID] = sharedPrefer.getString(Constants.LOCATION_ID, null)
-
+        user[KEY_SERVER_IP] = sharedPrefer.getString(KEY_SERVER_IP, null)
+        user[KEY_HTTP] = sharedPrefer.getString(KEY_HTTP, null)
         return user
     }
 
@@ -123,9 +126,9 @@ class SessionManager(context: Context) {
         return role?:""
     }
 
-    fun saveAdminDetails(serverIp: String?, portNumber: String?) {
+    fun saveAdminDetails(serverIp: String?, http: String?) {
         editor.putString(KEY_SERVER_IP, serverIp)
-        editor.putString(KEY_PORT, portNumber)
+        editor.putString(KEY_HTTP, http)
         editor.putBoolean(Constants.KEY_ISLOGGEDIN, false)
         editor.commit()
     }
@@ -140,18 +143,12 @@ class SessionManager(context: Context) {
         //const val KEY_USERID = Constants.USER_ID
 
 
-
-
-
-
-
-
        // const val KEY_RDT_ID = Constants.RDT_ID
         //const val KEY_TERMINAL = Constants.TERMINAL_ID
 
 
         //Admin Shared Prefs
-        const val KEY_SERVER_IP = "serverIp"
+
         const val KEY_PORT = "port"
     }
 
