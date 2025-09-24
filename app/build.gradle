@@ -11,8 +11,8 @@ android {
         applicationId "com.kemarport.kdmsmahindra"
         minSdk 26
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
+        versionCode 6
+        versionName "1.5.16"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -69,7 +69,7 @@ dependencies {
     //Toasty
     implementation 'com.github.GrenderG:Toasty:1.5.2'
 
-    implementation 'com.google.android.gms:play-services-location:20.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
     implementation 'com.google.maps.android:android-maps-utils:0.3.4'
 
@@ -82,5 +82,5 @@ dependencies {
     implementation 'androidx.drawerlayout:drawerlayout:1.1.1'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation project(':RFIDAPI3Library')
-
+    implementation 'com.google.zxing:core:3.4.1'
 }

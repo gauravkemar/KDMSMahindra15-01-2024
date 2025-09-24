@@ -1,34 +1,30 @@
 package com.kemarport.kdmsmahindra.view
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.github.mikephil.charting.data.BarEntry
 import com.kemarport.kdmsmahindra.R
+import com.kemarport.kdmsmahindra.adapter.DealerDashboardNew
 import com.kemarport.kdmsmahindra.adapter.DealerDashboardTableAdapter
-import com.kemarport.kdmsmahindra.adapter.MyDialogAdapter
 import com.kemarport.kdmsmahindra.databinding.FragmentDashboardNewBinding
 import com.kemarport.kdmsmahindra.helper.SessionManager
-import com.kemarport.kdmsmahindra.model.dashboard.VehicleConfirmationCountResponseItem
 import com.kemarport.kdmsmahindra.model.newapi.DashboardGetDeliveredDetailsResponse
 import com.kemarport.kdmsmahindra.repository.KDMSRepository
 import com.kemarport.kdmsmahindra.viewmodel.DashboardViewModel
 import com.kemarport.kdmsmahindra.viewmodel.DashboardViewModelFactory
 import com.kemarport.mahindrakiosk.helper.Constants
 import com.kemarport.mahindrakiosk.helper.Resource
+import com.kemarport.mahindrakiosk.helper.Utils
 import es.dmoral.toasty.Toasty
-import java.text.SimpleDateFormat
 import java.util.HashMap
-import java.util.Locale
 
 
 class DashboardNewFragment : Fragment() {
@@ -42,49 +38,69 @@ class DashboardNewFragment : Fragment() {
     private var token: String? = ""
     private lateinit var dealerDetails: HashMap<String, String?>
     private lateinit var session: SessionManager
-    private var baseUrl: String =""
+    private var baseUrl: String = ""
     private var serverIpSharedPrefText: String? = null
     private var serverHttpPrefText: String? = null
+
+    private var dealerDashboardNew: DealerDashboardNew? = null
+    lateinit var dashboardGetDeliveredDetailsResponse: MutableList<DashboardGetDeliveredDetailsResponse>
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
-        // Inflate the layout for this fragment
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_dashboard_new, container, false)
+        binding =
+            DataBindingUtil.inflate(inflater, R.layout.fragment_dashboard_new, container, false)
         session = SessionManager(requireContext())
         dealerDetails = session.getUserDetails()
         dealerCode = dealerDetails["dealerCode"]
         token = dealerDetails["jwtToken"]
         serverIpSharedPrefText = dealerDetails!![Constants.KEY_SERVER_IP].toString()
         serverHttpPrefText = dealerDetails!![Constants.KEY_HTTP].toString()
-        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText"
+        if (Utils.getSharedPrefs(requireActivity(), Constants.KEY_DEALER_NAME).isNullOrEmpty()) {
+            binding.tvUserName.setText("Welcome, USER")
+        } else {
+            binding.tvUserName.setText(
+                "Welcome, ${Utils.getSharedPrefs(requireActivity(), Constants.KEY_DEALER_NAME)}"
+            )
+        }
+        dashboardGetDeliveredDetailsResponse= mutableListOf()
 
         val kdmsRepository = KDMSRepository()
         val application = requireActivity().application
         val viewModelProviderFactory = DashboardViewModelFactory(application, kdmsRepository)
 
-        viewModel = ViewModelProvider(this, viewModelProviderFactory)[DashboardViewModel::class.java]
+        viewModel =
+            ViewModelProvider(this, viewModelProviderFactory)[DashboardViewModel::class.java]
         callApi()
 
         viewModel.getDeliveredCountMutable.observe(viewLifecycleOwner, Observer { response ->
             when (response) {
                 is Resource.Success -> {
-                    binding.homeSwipeRefresh.isRefreshing=false
+                    binding.homeSwipeRefresh.isRefreshing = false
                     response.data?.let {
+                        try {
+                            binding.tvTodayValue.setText(it.vehicleTodaysCount.toString())
+                            binding.tvThisMonthValue.setText(it.vehicleMonthsCount.toString())
+                        } catch (e: Exception) {
 
-                        binding.tvTotalVehicleScanValue.setText(it.vehicleTodaysCount.toString())
+                        }
+
                     }
                 }
+
                 is Resource.Error -> {
                     Log.d(TAG, "onCreate: rfid ${response.message}")
-                    binding.homeSwipeRefresh.isRefreshing=false
-                    if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
-                        response.message == Constants.CONFIG_ERROR) {
+                    binding.homeSwipeRefresh.isRefreshing = false
+                  /*  if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
+                        response.message == Constants.CONFIG_ERROR
+                    ) {
                         (requireActivity() as HomeActivity).showCustomDialog(
                             "Session Expired",
                             "Please re-login to continue"
                         )
-                    }
+                    }*/
                 }
 
                 is Resource.Loading -> {
@@ -94,22 +110,30 @@ class DashboardNewFragment : Fragment() {
         })
 
         viewModel.getDeliveredDetailsMutable.observe(viewLifecycleOwner,
-            Observer  { response ->
+            Observer { response ->
                 when (response) {
 
                     is Resource.Success -> {
-                        binding.homeSwipeRefresh.isRefreshing=false
+                        binding.homeSwipeRefresh.isRefreshing = false
                         hideTableProgressBar()
+                        dashboardGetDeliveredDetailsResponse.clear()
                         response.data?.let {
-                            setDashboardTableList(it)
+                            try {
+                                setDashboardTableList(it)
+                            } catch (e: Exception) {
+
+                            }
+
                         }
                     }
+
                     is Resource.Error -> {
-                        binding.homeSwipeRefresh.isRefreshing=false
+                        binding.homeSwipeRefresh.isRefreshing = false
                         hideTableProgressBar()
                         response.message?.let { errorMessage ->
-                            if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
-                                response.message == Constants.CONFIG_ERROR) {
+                    /*        if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
+                                response.message == Constants.CONFIG_ERROR
+                            ) {
                                 (requireActivity() as HomeActivity).showCustomDialog(
                                     "Session Expired",
                                     "Please re-login to continue"
@@ -118,13 +142,11 @@ class DashboardNewFragment : Fragment() {
                             Toasty.error(
                                 requireContext(),
                                 "Error Message: $errorMessage"
-                            ).show()
+                            ).show()*/
                         }
                     }
                     is Resource.Loading -> {
-
                         showTableProgressBar()
-
                     }
                 }
             })
@@ -132,23 +154,29 @@ class DashboardNewFragment : Fragment() {
         binding.homeSwipeRefresh.setOnRefreshListener {
             callApi()
         }
+        binding.mcvReceiveVehicle.setOnClickListener {
+            startVinActivity()
+        }
         return binding.root
     }
 
-    private fun callApi(){
-        try {
-            viewModel.getDeliveredCount (token!!,baseUrl)
-            viewModel.getDeliveredDetails (token!!,baseUrl )
+    private fun startVinActivity() {
+        startActivity(Intent(requireActivity(), MainActivity::class.java))
+    }
 
-        }
-        catch (e:Exception)
-        {
+    private fun callApi() {
+        try {
+            viewModel.getDeliveredCount(requireActivity())
+            viewModel.getDeliveredDetails(requireActivity())
+
+        } catch (e: Exception) {
             Toasty.error(
                 requireContext(),
                 "Error Message: $e"
             ).show()
         }
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         includedView = requireView().findViewById<View>(R.id.table_first_item)
@@ -173,12 +201,10 @@ class DashboardNewFragment : Fragment() {
     }
 
 
-
-
     private fun setDashboardTableList(resultResponse: ArrayList<DashboardGetDeliveredDetailsResponse>) {
         binding.tableFirstItem.tvColumnThree.text = "Date"
 
-        val list = ArrayList<DashboardGetDeliveredDetailsResponse>()
+/*        val list = ArrayList<DashboardGetDeliveredDetailsResponse>()
         list.addAll(resultResponse)
 
         // Access the RecyclerView using binding
@@ -191,7 +217,13 @@ class DashboardNewFragment : Fragment() {
             // Initialize the adapter if it's null
             vehicleRecyclerAdapter = DealerDashboardTableAdapter(requireContext(), list)
             binding.dashboardTable.adapter = vehicleRecyclerAdapter
-        }
+        }*/
+
+        dealerDashboardNew = DealerDashboardNew(requireActivity(), resultResponse)
+        binding.dashboardTable.adapter = dealerDashboardNew
+        binding.dashboardTable.layoutManager = LinearLayoutManager(requireActivity(), LinearLayoutManager.VERTICAL, false)
+        binding.dashboardTable.setHasFixedSize(true)
+
     }
 
 }

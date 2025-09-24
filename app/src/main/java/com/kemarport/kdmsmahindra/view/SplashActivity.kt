@@ -1,8 +1,10 @@
 package com.kemarport.kdmsmahindra.view
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.kemarport.kdmsmahindra.R
@@ -16,16 +18,36 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        Handler().postDelayed({
-            if (Utils.getSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, false)) {
-                Utils.setSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, true)
-                startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
-                finish()
+        /*        Handler().postDelayed({
+                    if (Utils.getSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, false)) {
+                        Utils.setSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, true)
+                        startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
+                        finish()
+                    } else {
+                        startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+                        finish()
+                    }
+                }, SPLASH_SCREEN_TIME_OUT)*/
+
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (Utils.getSharedPrefsBoolean(this, Constants.IS_REGISTERED, false)) {
+                if (Utils.getSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, false)) {
+                    Utils.setSharedPrefsBoolean(this@SplashActivity, Constants.LOGGEDIN, true)
+                    startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
+                    finish()
+                } else {
+                    startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+                    finish()
+                }
+
             } else {
-                startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+                startActivity(Intent(this@SplashActivity, DeviceLockActivity::class.java))
                 finish()
             }
-        }, SPLASH_SCREEN_TIME_OUT)
+
+        }, 3000)
     }
 }

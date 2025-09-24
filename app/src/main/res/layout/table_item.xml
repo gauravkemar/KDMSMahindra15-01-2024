@@ -1,81 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <androidx.constraintlayout.widget.ConstraintLayout
+
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
-            xmlns:android="http://schemas.android.com/apk/res/android"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cltop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.appcompat.widget.LinearLayoutCompat
+
+            <TextView
+                android:id="@+id/tv_column_one"
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Column 1"
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:padding="8dp"
-                    android:id="@+id/tv_column_one"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="Column 1" />
-
-            </androidx.appcompat.widget.LinearLayoutCompat>
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/tv_column_two"
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@android:color/darker_gray" />
+                android:layout_height="0dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintStart_toEndOf="@+id/tv_column_one"
+                app:layout_constraintEnd_toStartOf="@+id/tv_column_two"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_column_two"/>
 
-            <androidx.appcompat.widget.LinearLayoutCompat
+
+            <TextView
+                android:id="@+id/tv_column_two"
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="8dp"
+                app:layout_constraintStart_toEndOf="@+id/tv_column_one"
+                app:layout_constraintEnd_toStartOf="@+id/tv_column_three"
+                app:layout_constraintTop_toTopOf="parent"
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:padding="8dp"
-                    android:id="@+id/tv_column_two"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="Column 1" />
+                android:text="Column 1" />
 
-            </androidx.appcompat.widget.LinearLayoutCompat>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@android:color/darker_gray" />
+                android:layout_height="0dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintStart_toEndOf="@+id/tv_column_two"
+                app:layout_constraintEnd_toStartOf="@+id/tv_column_three"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_column_three"/>
 
-            <androidx.appcompat.widget.LinearLayoutCompat
+
+            <TextView
+                android:id="@+id/tv_column_three"
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@+id/tv_column_two"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Column 1" />
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:padding="8dp"
-                    android:id="@+id/tv_column_three"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="Column 1" />
 
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
 
         <View
             android:id="@+id/row_divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/darker_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cltop" />
 
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

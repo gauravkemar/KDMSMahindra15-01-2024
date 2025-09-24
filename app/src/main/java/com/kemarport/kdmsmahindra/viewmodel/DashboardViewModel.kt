@@ -1,5 +1,6 @@
 package com.kemarport.kdmsmahindra.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
@@ -38,47 +39,43 @@ class DashboardViewModel (
 
 
     fun getVehicleConfirmationCount(
-        token: String,
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context:Activity,
         dealerCode: String,
         period: Int
     ) {
         viewModelScope.launch {
-            fetchVehicleConfirmationCount(token,baseUrl, dealerCode, period)
+            fetchVehicleConfirmationCount(context, dealerCode, period)
         }
     }
 
     fun getVehicleConfirmation(
-        token: String,
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context:Activity,
         dealerCode: String,
         period: Int
     ) {
         viewModelScope.launch {
-            fetchVehicleConfirmation(token,baseUrl, dealerCode, period)
+            fetchVehicleConfirmation(context,dealerCode, period)
         }
     }
 
     fun getRFIDCount(
-        token: String,
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context:Activity,
         dealerCode: String
     ) {
         viewModelScope.launch {
-            fetchRFIDCount(token,baseUrl, dealerCode)
+            fetchRFIDCount(context, dealerCode)
         }
     }
 
     private suspend fun fetchVehicleConfirmationCount(
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context:Activity,
         dealerCode: String,
-        dealerCode1: String,
         period: Int
     ) {
         _vehicleConfirmationCountMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.getDealerVehicleConfirmationCount(dealerCode1,baseUrl, period, dealerCode)
+                val response = kdmsRepository.getDealerVehicleConfirmationCount(context, period, dealerCode)
                 _vehicleConfirmationCountMutableLiveData.postValue(Resource.Success(response.body()))
             } else {
                 _vehicleConfirmationCountMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -95,15 +92,14 @@ class DashboardViewModel (
     }
 
     private suspend fun fetchVehicleConfirmation(
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context: Activity,
         dealerCode: String,
-        dealerCode1: String,
         period: Int
     ) {
         _vehicleConfirmationMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.getDealerVehicleConfirmation(dealerCode1,baseUrl, period, dealerCode)
+                val response = kdmsRepository.getDealerVehicleConfirmation( context, period, dealerCode)
                 _vehicleConfirmationMutableLiveData.postValue(Resource.Success(response.body()))
             } else {
                 _vehicleConfirmationMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -120,14 +116,13 @@ class DashboardViewModel (
     }
 
     private suspend fun fetchRFIDCount(
-        baseUrl: String = Constants.BASE_URL_LOCAL,
+        context:Activity,
         dealerCode: String,
-        dealerCode1: String
     ) {
         _rfidMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.getScanRFIDCount(dealerCode1,baseUrl, dealerCode)
+                val response = kdmsRepository.getScanRFIDCount( context,dealerCode)
                 _rfidMutableLiveData.postValue(Resource.Success(response.body()))
             } else {
                 _rfidMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -147,22 +142,19 @@ class DashboardViewModel (
     val getDeliveredCountMutable: MutableLiveData<Resource<GetDeliveredCountResponse>> = MutableLiveData()
 
     fun getDeliveredCount(
-        token: String,
-        baseUrl: String,
+        context: Activity
     ) {
         viewModelScope.launch {
-            safeAPICallGetDeliveredCount(token,baseUrl)
+            safeAPICallGetDeliveredCount(context)
         }
     }
     private suspend fun safeAPICallGetDeliveredCount(
-        token: String,
-        baseUrl: String,
-
+        context: Activity
     ) {
         getDeliveredCountMutable.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.getDeliveredCount(token,baseUrl )
+                val response = kdmsRepository.getDeliveredCount(context )
                 getDeliveredCountMutable.postValue(handleGetDeliveredCountMutableResponse(response))
             } else {
                 getDeliveredCountMutable.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -198,21 +190,19 @@ class DashboardViewModel (
     val getDeliveredDetailsMutable: MutableLiveData<Resource<ArrayList<DashboardGetDeliveredDetailsResponse>>> = MutableLiveData()
 
     fun getDeliveredDetails(
-        token: String,
-        baseUrl: String,
+        context: Activity
     ) {
         viewModelScope.launch {
-            safeAPICallGetDeliveredDetails(token,baseUrl)
+            safeAPICallGetDeliveredDetails(context)
         }
     }
     private suspend fun safeAPICallGetDeliveredDetails(
-        token: String,
-        baseUrl: String,
+        context: Activity
     ) {
         getDeliveredDetailsMutable.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.getDeliveredDetails(token,baseUrl )
+                val response = kdmsRepository.getDeliveredDetails(context )
                 getDeliveredDetailsMutable.postValue(handleGetDeliveredDetailsResponse(response))
             } else {
                 getDeliveredDetailsMutable.postValue(Resource.Error(Constants.NO_INTERNET))

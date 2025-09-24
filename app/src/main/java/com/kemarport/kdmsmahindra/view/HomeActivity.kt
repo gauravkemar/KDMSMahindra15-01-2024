@@ -1,19 +1,24 @@
 package com.kemarport.kdmsmahindra.view
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.PorterDuff
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Html
+import android.view.Gravity
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
 import com.kemarport.kdmsmahindra.R
 import com.kemarport.kdmsmahindra.databinding.ActivityHomeBinding
 import com.kemarport.kdmsmahindra.helper.SessionManager
+import es.dmoral.toasty.Toasty
 
 class HomeActivity : AppCompatActivity(){
 lateinit var actionBarDrawerToggle: ActionBarDrawerToggle
@@ -21,24 +26,30 @@ lateinit var binding:ActivityHomeBinding
     private lateinit var session: SessionManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         binding=DataBindingUtil.setContentView(this,R.layout.activity_home)
         session = SessionManager(this)
         setSupportActionBar(binding.homeToolbar)
-        actionBarDrawerToggle = ActionBarDrawerToggle(this, binding.myDrawerLayout, R.string.nav_open, R.string.nav_close)
-        binding.myDrawerLayout.addDrawerListener(actionBarDrawerToggle)
-        actionBarDrawerToggle.isDrawerIndicatorEnabled = true
-        actionBarDrawerToggle.syncState()
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val drawable = ContextCompat.getDrawable(this, R.drawable.ic_hamburger_white)
-        drawable?.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-        binding.homeToolbar.navigationIcon = drawable
+       //binding.myDrawerLayout.closeDrawer(GravityCompat.START)
+        Toasty.Config.getInstance()
+            .setGravity(Gravity.CENTER)
+            .apply()
+        //actionBarDrawerToggle = ActionBarDrawerToggle(this, binding.myDrawerLayout, R.string.nav_open, R.string.nav_close)
+        //binding.myDrawerLayout.addDrawerListener(actionBarDrawerToggle)
+        //actionBarDrawerToggle.isDrawerIndicatorEnabled = true
+        //actionBarDrawerToggle.syncState()
+        //supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        //val drawable = ContextCompat.getDrawable(this, R.drawable.ic_hamburger_white)
+        //drawable?.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+       // binding.homeToolbar.navigationIcon = drawable
         if (savedInstanceState == null) {
             val defaultFragment = DashboardNewFragment()
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, defaultFragment)
                 .commit()
         }
-        binding.homeNavDrawer.setNavigationItemSelectedListener { menuItem ->
+       /* binding.homeNavDrawer.setNavigationItemSelectedListener { menuItem ->
             // Handle item selection here
             when (menuItem.itemId) {
                 R.id.nav_home -> {
@@ -50,9 +61,9 @@ lateinit var binding:ActivityHomeBinding
                 R.id.vin_confirmation -> {
                     startActivity(Intent(this@HomeActivity, MainActivity::class.java))
                 }
-                R.id.change_password -> {
-                    startActivity(Intent(this@HomeActivity, ChangePasswordActivity::class.java))
-                }
+              *//*  R.id.change_password -> {
+                    //startActivity(Intent(this@HomeActivity, ChangePasswordActivity::class.java))
+                }*//*
                 R.id.logout -> {
                     showLogoutDialog()
                 }
@@ -62,13 +73,13 @@ lateinit var binding:ActivityHomeBinding
             // Close the drawer after item selection
             binding.myDrawerLayout.closeDrawers()
             true
-        }
-        binding.vinConfirmationBtn.setOnClickListener {
+        }*/
+        binding.profilePage.setOnClickListener {
             startVinActivity()
         }
     }
     private fun startVinActivity(){
-        startActivity(Intent(this@HomeActivity,MainActivity::class.java))
+        startActivity(Intent(this@HomeActivity,ProfileActivity::class.java))
     }
     private fun logout(){
         session.logoutUser()

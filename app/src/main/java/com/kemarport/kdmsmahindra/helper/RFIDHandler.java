@@ -53,16 +53,14 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
     private int MAX_POWER = 270;
     private int POWER_REQUIRED = 50;
     // In case of RFD8500 change reader name with intended device below from list of paired RFD8500
-    String readerName = "RFD4031-G10B700-JP";
+    //String readerName = "RFD4031-G10B700-JP";
+    String readerName = "RFD40";
 
 
 
-    public void init(MainActivity activity) {
-        // application context
+    public void init(MainActivity activity,int antennaPower) {
         context = activity;
-        // Status UI
-        //textView = activity.statusTextViewRFID;
-        // SDK
+        POWER_REQUIRED=antennaPower;
         InitSDK();
     }
 
@@ -242,7 +240,8 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
                         } else {
                             // search reader specified by name
                             for (ReaderDevice device : availableRFIDReaderList) {
-                                if (device.getName().equals(readerName)) {
+                                Log.e("ReaderList",device.getName().toString());
+                                if (device.getName().startsWith(readerName)) {
                                     readerDevice = device;
                                     reader = readerDevice.getRFIDReader();
                                 }
@@ -348,7 +347,7 @@ public class RFIDHandler implements Readers.RFIDReaderEventHandler {
                 context.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        textView.setText("Disconnected");
+                        //textView.setText("Disconnected");
                     }
                 });
             }

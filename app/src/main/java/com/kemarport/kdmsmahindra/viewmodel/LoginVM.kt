@@ -1,9 +1,11 @@
 package com.kemarport.kdmsmahindra.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.kemarport.kdmsmahindra.model.autoupdate.GetAppDetailsResponse
 import com.kemarport.kdmsmahindra.model.changepassword.ChangePasswordRequest
 import com.kemarport.kdmsmahindra.model.changepassword.ChangePasswordResponse
 import com.kemarport.kdmsmahindra.model.forgotpassword.ForgotPasswordRequest
@@ -23,16 +25,16 @@ import retrofit2.Response
 
 class LoginVM(
     application: Application,
-    private val kdmsRepository: KDMSRepository
+    private val kdmsRepository: KDMSRepository,
 ) : AndroidViewModel(application) {
     val loginMutableLiveData: MutableLiveData<Resource<LoginResponse>> = MutableLiveData()
 
     fun login(
-        baseUrl: String,
-        loginRequest: LoginRequest
+        context: Activity,
+        loginRequest: LoginRequest,
     ) {
         viewModelScope.launch {
-            safeAPICallDtmsLogin(baseUrl, loginRequest)
+            safeAPICallDtmsLogin(context, loginRequest)
         }
     }
 
@@ -53,11 +55,11 @@ class LoginVM(
         return Resource.Error(errorMessage)
     }
 
-    private suspend fun safeAPICallDtmsLogin(baseUrl: String, loginRequest: LoginRequest) {
+    private suspend fun safeAPICallDtmsLogin(context: Activity, loginRequest: LoginRequest) {
         loginMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.login(baseUrl, loginRequest)
+                val response = kdmsRepository.login(context, loginRequest)
                 loginMutableLiveData.postValue(handleDtmsUserLoginResponse(response))
             } else {
                 loginMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -78,24 +80,22 @@ class LoginVM(
         MutableLiveData()
 
     fun changePassword(
-        token:String,
-        baseUrl: String,
-        changePasswordRequest: ChangePasswordRequest
+        context: Activity,
+        changePasswordRequest: ChangePasswordRequest,
     ) {
         viewModelScope.launch {
-            safeAPICallChangePasswordDetails(token,baseUrl, changePasswordRequest)
+            safeAPICallChangePasswordDetails(context, changePasswordRequest)
         }
     }
 
     private suspend fun safeAPICallChangePasswordDetails(
-        token:String,
-        baseUrl: String,
-        changePasswordRequest: ChangePasswordRequest
+        context: Activity,
+        changePasswordRequest: ChangePasswordRequest,
     ) {
         changePasswordMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.changePassword(token,baseUrl, changePasswordRequest)
+                val response = kdmsRepository.changePassword(context, changePasswordRequest)
                 changePasswordMutableLiveData.postValue(handleChangePasswordResponse(response))
             } else {
                 changePasswordMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -134,22 +134,22 @@ class LoginVM(
         MutableLiveData()
 
     fun forgotPassword(
-        baseUrl: String,
-        forgotPasswordRequest: ForgotPasswordRequest
+        context: Activity,
+        forgotPasswordRequest: ForgotPasswordRequest,
     ) {
         viewModelScope.launch {
-            safeAPICallForgotPasswordDetails(baseUrl, forgotPasswordRequest)
+            safeAPICallForgotPasswordDetails(context, forgotPasswordRequest)
         }
     }
 
     private suspend fun safeAPICallForgotPasswordDetails(
-        baseUrl: String,
-        forgotPasswordRequest: ForgotPasswordRequest
+        context: Activity,
+        forgotPasswordRequest: ForgotPasswordRequest,
     ) {
         forgotPasswordMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.forgotPassword(baseUrl, forgotPasswordRequest)
+                val response = kdmsRepository.forgotPassword(context, forgotPasswordRequest)
                 forgotPasswordMutableLiveData.postValue(handleForgotPasswordResponse(response))
             } else {
                 forgotPasswordMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -187,22 +187,22 @@ class LoginVM(
         MutableLiveData()
 
     fun resetPassword(
-        baseUrl: String,
-        resetPasswordRequest: ResetPasswordRequest
+        context: Activity,
+        resetPasswordRequest: ResetPasswordRequest,
     ) {
         viewModelScope.launch {
-            safeAPICallResetPasswordDetails(baseUrl, resetPasswordRequest)
+            safeAPICallResetPasswordDetails(context, resetPasswordRequest)
         }
     }
 
     private suspend fun safeAPICallResetPasswordDetails(
-        baseUrl: String,
-        resetPasswordRequest: ResetPasswordRequest
+        context: Activity,
+        resetPasswordRequest: ResetPasswordRequest,
     ) {
         resetPasswordMutableLiveData.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.resetPassword(baseUrl, resetPasswordRequest)
+                val response = kdmsRepository.resetPassword(context, resetPasswordRequest)
                 resetPasswordMutableLiveData.postValue(handleResetPasswordResponse(response))
             } else {
                 resetPasswordMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -235,4 +235,55 @@ class LoginVM(
         return Resource.Error(errorMessage)
     }
 
+
+    val getAppDetailsMutableLiveData: MutableLiveData<Resource<GetAppDetailsResponse>> =
+        MutableLiveData()
+
+    fun getAppDetails(
+        context: Activity,
+    ) {
+        viewModelScope.launch {
+            safeAPICallGetAppDetails(context)
+        }
+    }
+
+    private suspend fun safeAPICallGetAppDetails(context: Activity) {
+        getAppDetailsMutableLiveData.postValue(Resource.Loading())
+        try {
+            if (Utils.hasInternetConnection(getApplication())) {
+                val response = kdmsRepository.getAppDetails(context)
+
+                //val response = dtmsetmsRepository.getAppDetails(baseUrl)
+                getAppDetailsMutableLiveData.postValue(handleGetAppDetailsResponse(response))
+            } else {
+                getAppDetailsMutableLiveData.postValue(Resource.Error(Constants.NO_INTERNET))
+            }
+        } catch (t: Throwable) {
+            when (t) {
+                is Exception -> {
+                    getAppDetailsMutableLiveData.postValue(Resource.Error("${t.message}"))
+                }
+
+                else -> getAppDetailsMutableLiveData.postValue(Resource.Error(Constants.CONFIG_ERROR))
+            }
+        }
+    }
+
+
+    private fun handleGetAppDetailsResponse(response: Response<GetAppDetailsResponse>): Resource<GetAppDetailsResponse> {
+        var errorMessage = ""
+        if (response.isSuccessful) {
+            response.body()?.let { etmsLoginResponse ->
+                return Resource.Success(etmsLoginResponse)
+            }
+        } else if (response.errorBody() != null) {
+            val errorObject = response.errorBody()?.let {
+                JSONObject(it.charStream().readText())
+            }
+            errorObject?.let {
+                errorMessage = it.getString("errorMessage")
+            }
+        }
+        return Resource.Error(errorMessage)
+    }
 }

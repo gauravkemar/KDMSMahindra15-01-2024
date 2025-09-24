@@ -1,20 +1,22 @@
 package com.kemarport.kdmsmahindra.model.login
 
 data class LoginResponse(
-    val coordinates: String,
+    val coordinates: Any,
     val dealerCode: String,
+    val dealerCoordinates: List<DealerCoordinate>,
     val dealerName: String,
     val email: String,
     val firstName: String,
     val id: Int,
+    val isPasswordReset: Boolean,
     val isVerified: Boolean,
     val jwtToken: String,
     val lastName: String,
     val locationId: Int,
-    val menuAccess: List<Any>,
+    val locationsWithoutCoordinates: Int,
     val mobileNumber: String,
     val refreshToken: String,
     val roleName: String,
-    val userAccess: List<Any>,
+    val totalLocations: Int,
     val userName: String
 )

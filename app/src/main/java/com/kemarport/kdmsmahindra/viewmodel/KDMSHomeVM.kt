@@ -1,5 +1,6 @@
 package com.kemarport.kdmsmahindra.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
@@ -121,23 +122,21 @@ class KDMSHomeVM (
     val postVerifyDealerVehicleMutable: MutableLiveData<Resource<VerifyDealerVehicleResponse>> = MutableLiveData()
 
     fun postVerifyDealerVehicle(
-        token: String,
-        baseUrl: String,
+        context: Activity,
         verifyDealerVehicleRequest: VerifyDealerVehicleRequest
     ) {
         viewModelScope.launch {
-            safeAPICallPostVerifyDealerVehicle(token,baseUrl, verifyDealerVehicleRequest)
+            safeAPICallPostVerifyDealerVehicle(context, verifyDealerVehicleRequest)
         }
     }
     private suspend fun safeAPICallPostVerifyDealerVehicle(
-        token: String,
-        baseUrl: String,
+        context: Activity,
         verifyDealerVehicleRequest: VerifyDealerVehicleRequest
     ) {
         postVerifyDealerVehicleMutable.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.postVerifyDealerVehicle(token,baseUrl, verifyDealerVehicleRequest)
+                val response = kdmsRepository.postVerifyDealerVehicle(context, verifyDealerVehicleRequest)
                 postVerifyDealerVehicleMutable.postValue(handlePostVerifyDealerVehicleResponse(response))
             } else {
                 postVerifyDealerVehicleMutable.postValue(Resource.Error(Constants.NO_INTERNET))
@@ -172,23 +171,21 @@ class KDMSHomeVM (
     val postConfirmDealerVehicleDeliveryMutable: MutableLiveData<Resource<ConfirmDealerVehicleDeliveryResponse>> = MutableLiveData()
 
     fun postConfirmDealerVehicleDelivery(
-        token: String,
-        baseUrl: String,
+        context: Activity,
         confirmDealerVehicleDeliveryRequest: ConfirmDealerVehicleDeliveryRequest
     ) {
         viewModelScope.launch {
-            safeAPICallPostConfirmDealerVehicleDelivery(token,baseUrl, confirmDealerVehicleDeliveryRequest)
+            safeAPICallPostConfirmDealerVehicleDelivery(context, confirmDealerVehicleDeliveryRequest)
         }
     }
     private suspend fun safeAPICallPostConfirmDealerVehicleDelivery(
-        token: String,
-        baseUrl: String,
+        context: Activity,
         confirmDealerVehicleDeliveryRequest: ConfirmDealerVehicleDeliveryRequest
     ) {
         postConfirmDealerVehicleDeliveryMutable.postValue(Resource.Loading())
         try {
             if (Utils.hasInternetConnection(getApplication())) {
-                val response = kdmsRepository.postConfirmDealerVehicleDelivery(token,baseUrl, confirmDealerVehicleDeliveryRequest)
+                val response = kdmsRepository.postConfirmDealerVehicleDelivery(context, confirmDealerVehicleDeliveryRequest)
                 postConfirmDealerVehicleDeliveryMutable.postValue(handlepostConfirmDealerVehicleDeliveryResponse(response))
             } else {
                 postConfirmDealerVehicleDeliveryMutable.postValue(Resource.Error(Constants.NO_INTERNET))

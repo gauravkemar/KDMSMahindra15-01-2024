@@ -2,14 +2,19 @@ package com.kemarport.kdmsmahindra.view
 
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.DataBindingUtil
 import com.kemarport.kdmsmahindra.R
 import com.kemarport.kdmsmahindra.databinding.ActivityAdminSettingsBinding
 import com.kemarport.kdmsmahindra.helper.SessionManager
+import com.kemarport.mahindrakiosk.helper.Constants
+import com.kemarport.mahindrakiosk.helper.Utils
+import es.dmoral.toasty.Toasty
 
 
 class AdminSettingsActivity : AppCompatActivity() {
@@ -23,7 +28,8 @@ class AdminSettingsActivity : AppCompatActivity() {
     private lateinit var user: HashMap<String, String?>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         binding = DataBindingUtil.setContentView(this, R.layout.activity_admin_settings)
         session = SessionManager(this)
         user = session.getUserDetails()
@@ -67,6 +73,21 @@ class AdminSettingsActivity : AppCompatActivity() {
 
             }
 
+        }
+
+        binding.edAntennaPower.setText(Utils.getSharedPrefs(this@AdminSettingsActivity, Constants.SET_ANTENNA_POWER))
+        binding.setAntennaPower.setOnClickListener {
+            checkinputAntennaPower()
+        }
+    }
+    private fun checkinputAntennaPower() {
+        val url: String = binding.edAntennaPower.getText().toString().trim()
+        if (url.isEmpty() || url.equals("")) {
+            binding.edAntennaPower.setError("Please enter ip address")
+        } else {
+            Utils.setSharedPrefs(this@AdminSettingsActivity, Constants.SET_ANTENNA_POWER, url )
+            Toasty.success(this@AdminSettingsActivity,"Antenna Power Updated.",Toasty.LENGTH_SHORT)
+                .show()
         }
     }
     private fun showDialog(

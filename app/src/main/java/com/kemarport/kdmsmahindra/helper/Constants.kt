@@ -30,7 +30,7 @@ object Constants {
     const val HTTP_NOT_FOUND = 404
     const val HTTP_CONFLICT = 409
     const val HTTP_INTERNAL_SERVER_ERROR = 500
-
+    const val HTTP_ERROR = 400
     const val ADD_LOCATIONS = "LocationMapping/AddLocations"
     const val GET_PARENT_LOCATION = "LocationMapping/GetParentLocation"
    // const val LOGIN_URL = "UserManagement/authenticate"
@@ -71,6 +71,7 @@ object Constants {
     const val LOCATION_ID="locationId"
     const val KEY_USER_NAME = "userName"
     const val DEALER_CODE = "dealerCode"
+    const val DEALER_COORDINATES = "dealerCoordinates"
     const val KEY_USER_FIRST_NAME = "firstName"
     const val KEY_USER_LAST_NAME= "lastName"
     const val KEY_USER_EMAIL = "email"
@@ -79,13 +80,24 @@ object Constants {
     const val COORDINATES = "coordinates"
     const val KEY_JWT_TOKEN = "jwtToken"
     const val ROLE_NAME = "roleName"
-    const val KEY_REFRESH_TOKEN = "refreshToken"
     const val KEY_ISLOGGEDIN = "isLoggedIn"
     const val KEY_HTTP = "http"
     const val KEY_SERVER_IP = "serverIp"
+    const val KEY_DEALER_NAME = "dealerName"
+
+    const val IS_CONFIGURED = "isConfigured"
+    const val IS_VERIFIED = "isVerified"
+    const val IS_REGISTERED = "isRegistered"
+    const val SET_ANTENNA_POWER = "antenna_power"
+
+    const val HTTP_HEADER_AUTHORIZATION = "Authorization"
+    const val SESSION_EXPIRE = "Session Expired ! Please relogin"
+    const val KEY_REFRESH_TOKEN = "refreshToken"
+    const val getRefreshToken = "UserManagement/refreshtoken";
 
 
 
+    const val GET_APP_DETAILS = "MobileService/GetLatestApkVersion"
     const val LOGIN_URL = "UserManagement/authenticate"
     const val VERIFY_DEALER_VEHICLE = "MobileService/verifyDealerVehicle"
     const val CONFIRM_DEALER_VEHICLE_DELIVERY = "MobileService/confirmDealerVehicleDelivery"
@@ -94,5 +106,12 @@ object Constants {
     const val  CHANGE_PASSWORD= "UserManagement/change-password"
     const val  FORGOT_PASSWORD= "UserManagement/forgot-password"
     const val  RESET_PASSWORD= "UserManagement/reset-password"
+
+
+    const val  GET_DEALER_LOCATIONS= "Location/getDealerLocations"
+    const val  POST_GEOFENCE_COORDINATES= "MobileService/postGeofenceCoordinates"
+
+
+
 
 }

@@ -53,7 +53,7 @@ class ChangePasswordActivity : AppCompatActivity() {
         token = userDetails[Constants.KEY_JWT_TOKEN].toString()
         serverIpSharedPrefText = userDetails!![Constants.KEY_SERVER_IP].toString()
         serverHttpPrefText = userDetails!![Constants.KEY_HTTP].toString()
-        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText"
         val kdmsRepository = KDMSRepository()
         val viewModelProviderFactory =
             LoginVMPF(application, kdmsRepository)
@@ -245,7 +245,7 @@ class ChangePasswordActivity : AppCompatActivity() {
                     ChangePasswordRequest(edConfirmPassword, edOldPassword, edNewPassword, it)
                 }
                 ?.let {
-                    viewModel.changePassword(token!!,baseUrl, it)
+                    viewModel.changePassword(this@ChangePasswordActivity, it)
                 }
 
         } else {

@@ -8,10 +8,10 @@
         android:id="@+id/vin_confirmation"
         android:title="VIN Confirmation"
         android:icon="@drawable/ic_vin_confirm_black"/>
-    <item
+<!--    <item
         android:id="@+id/change_password"
         android:title="Change Password"
-        android:icon="@drawable/ic_change_password"/>
+        android:icon="@drawable/ic_change_password"/>-->
     <item
         android:id="@+id/logout"
         android:title="Logout"

@@ -5,6 +5,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.location.LocationManager
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -20,14 +21,18 @@ import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.google.maps.android.PolyUtil
 import com.kemarport.kdmsmahindra.R
 import com.kemarport.kdmsmahindra.databinding.ActivityMainBinding
@@ -62,8 +67,10 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     private var userName: String? = ""
     private var locationId: String? = ""
     private lateinit var dealerDetails: HashMap<String, String?>
-    lateinit var coordinates: ArrayList<LatLng>
-    var coordinatePref = ""
+
+    //lateinit var coordinates: ArrayList<LatLng>
+    lateinit var allPolygons: ArrayList<ArrayList<LatLng>>
+    //var coordinatePref = ""
     private lateinit var session: SessionManager
 
     //viewmodel
@@ -86,7 +93,8 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     var rfidHandler: RFIDHandler? = null
     private fun initReader() {
         rfidHandler = RFIDHandler()
-        rfidHandler!!.init(this)
+        Utils.getSharedPrefs(this@MainActivity, Constants.SET_ANTENNA_POWER)
+            ?.let { rfidHandler!!.init(this, it.toInt()) }
     }
 
     var isRFIDInit = false
@@ -123,20 +131,19 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     var barcodeManager: BarcodeManager? = null
     var scanner: Scanner? = null
 
-
-    private var baseUrl: String =""
+    private var baseUrl: String = ""
     private var serverIpSharedPrefText: String? = null
     private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         setSupportActionBar(binding.homeToolbar)
-        supportActionBar?.title = "VIN Confirmation"
         progress = ProgressDialog(this)
         progress.setMessage("Please Wait...")
         session = SessionManager(this)
-
+        checkPermissions()
         dealerDetails = session.getUserDetails()
         dealerCode = dealerDetails[Constants.DEALER_CODE]
         token = dealerDetails[Constants.KEY_JWT_TOKEN]
@@ -145,9 +152,9 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         locationId = dealerDetails[Constants.LOCATION_ID]
         serverIpSharedPrefText = dealerDetails!![Constants.KEY_SERVER_IP].toString()
         serverHttpPrefText = dealerDetails!![Constants.KEY_HTTP].toString()
-        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText"
 
-        binding.radioGroup.check(binding.radioBtn2.getId())
+        //binding.radioGroup.check(binding.radioBtn2.getId())
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
         Toasty.Config.getInstance()
@@ -158,11 +165,53 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         isGPSEnabled = locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)
         isNetworkEnabled = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        coordinatePref = Utils.getSharedPrefs(this@MainActivity, Constants.COORDINATES).toString()
-        coordinates = parseStringToList(coordinatePref)
+
+
+        //coordinatePref = Utils.getSharedPrefs(this@MainActivity, Constants.COORDINATES).toString()
+        //coordinates = parseStringToList(coordinatePref)
+        // coordinates = parseStringToList(coordinatePref)
+
+     /*   val coordinateJson = Utils.getSharedPrefs(this@MainActivity, Constants.COORDINATES)
+
+        try {
+            val polygon: ArrayList<LatLng> = parseStringToList(coordinateJson ?: "")
+            allPolygons = arrayListOf(polygon)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // fallback to empty list if parsing fails
+            allPolygons = arrayListOf()
+        }*/
+
+        val dealerCoordinates = session.getDealerCoordinates(this@MainActivity)
+        if (!dealerCoordinates.isNullOrEmpty()) {
+            dealerCoordinates.forEach { dealer ->
+                dealer.coordinates?.let { coordinateJson ->
+                    try {
+                        val polygon: ArrayList<LatLng> = parseStringToList(coordinateJson)
+                        allPolygons = arrayListOf(polygon)  // add each polygon
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                Log.e("coordinates",allPolygons.toString())
+
+            }
+        }
         checkLocationPermission()
         startLocationProviderCheck()
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    1
+                )
+            }
+        }
         val color = Color.parseColor("#004f8c") // Replace with your desired color
         val grey = Color.parseColor("#9A9A9A")
         //viewmodel
@@ -176,35 +225,41 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     response.data?.let { resultResponse ->
                         /* Toasty.success(this, response.data.responseMessage, Toasty.LENGTH_SHORT)
                                      .show()*/
-                        var message = resultResponse.message
-                        var status = resultResponse.status
-                        if (message != null) {
-                            Toasty.warning(this, resultResponse.message, Toasty.LENGTH_SHORT)
-                                .show()
-                        }
 
-                        if (resultResponse != null) {
-                            val rfid = binding.edVinScan.text.toString().trim()
-                            binding.tvVinValue.setText(resultResponse.vin)
-                            binding.tvModelCodeValue.setText(resultResponse.modelCode)
-                            binding.tvColorValue.setText(resultResponse.colorDescription)
-                            binding.tvEngineNoValue.setText(resultResponse.engineNo)
-                            /*binding.btnSubmit.setOnClickListener {
-                                confirmVin(resultResponse.responseObject.vin)
-                                //submitVin("")
-                            }*/
-                            ViewCompat.setBackgroundTintList(
-                                binding.btnSubmit,
-                                ColorStateList.valueOf(color)
-                            )
-
-                            binding.btnSubmit.isEnabled = true
-                            binding.btnSubmit.setOnClickListener {
-                                //confirmVin(resultResponse.responseObject.vin)
-                                confirmVin(rfid)
-                                //submitVin("")
+                        try {
+                            var message = resultResponse.message
+                            var status = resultResponse.status
+                            if (message != null) {
+                                Toasty.success(this, resultResponse.message, Toasty.LENGTH_SHORT)
+                                    .show()
                             }
+
+                            if (resultResponse != null) {
+                                val rfid = binding.edVinScan.text.toString().trim()
+                                binding.tvVinValue.setText(resultResponse.vin)
+                                binding.tvModelCodeValue.setText(resultResponse.modelCode)
+                                binding.tvColorValue.setText(resultResponse.colorDescription)
+                                //binding.tvEngineNoValue.setText(resultResponse.engineNo)
+                                /*binding.btnSubmit.setOnClickListener {
+                                    confirmVin(resultResponse.responseObject.vin)
+                                    //submitVin("")
+                                }*/
+                                ViewCompat.setBackgroundTintList(
+                                    binding.btnSubmit,
+                                    ColorStateList.valueOf(color)
+                                )
+
+                                binding.btnSubmit.isEnabled = true
+                                binding.btnSubmit.setOnClickListener {
+                                    //confirmVin(resultResponse.responseObject.vin)
+                                    confirmVin(rfid)
+                                    //submitVin("")
+                                }
+                            }
+                        } catch (e: Exception) {
+
                         }
+
 
                     }
                 }
@@ -220,14 +275,14 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     binding.btnSubmit.isEnabled = false
                     response.message?.let { resultResponse ->
                         Toasty.error(this, resultResponse, Toasty.LENGTH_SHORT).show()
-                        if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
+                       /* if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
                             resultResponse == Constants.CONFIG_ERROR
                         ) {
                             showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
                             )
-                        }
+                        }*/
 
                     }
                 }
@@ -258,20 +313,26 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                                Toasty.success(this, resultResponse.errorMessage, Toasty.LENGTH_SHORT)
                                    .show()
                            }*/
-                        var status = resultResponse.status
-                        if (status == "Failed") {
-                            Toasty.error(this, resultResponse.message, Toasty.LENGTH_SHORT)
-                                .show()
-                        } else if (status == "Success") {
-                            Toasty.success(this, resultResponse.message, Toasty.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            Toasty.warning(this, resultResponse.message, Toasty.LENGTH_SHORT)
-                                .show()
+
+                        try {
+                            var status = resultResponse.status
+                            if (status == "failed") {
+                                Toasty.error(this, resultResponse.message, Toasty.LENGTH_SHORT)
+                                    .show()
+                            } else if (status == "success") {
+                                Toasty.success(this, resultResponse.message, Toasty.LENGTH_SHORT)
+                                    .show()
+                            } else {
+                                Toasty.warning(this, resultResponse.message, Toasty.LENGTH_SHORT)
+                                    .show()
+                            }
+
+
+                            clearText()
+                        } catch (e: Exception) {
+
                         }
 
-
-                        clearText()
                     }
 
                 }
@@ -285,14 +346,14 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     binding.btnSubmit.isEnabled = false
                     response.message?.let { resultResponse ->
                         Toasty.error(this, resultResponse, Toasty.LENGTH_SHORT).show()
-                        if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
+                    /*    if (resultResponse == "Session Expired ! Please relogin" || resultResponse == "Authentication token expired" ||
                             resultResponse == Constants.CONFIG_ERROR
                         ) {
                             showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
                             )
-                        }
+                        }*/
                     }
                     response.message?.let { resultResponse ->
                         Toasty.error(this, resultResponse, Toasty.LENGTH_SHORT).show()
@@ -318,33 +379,76 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
         if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
 
-            binding.radioGroup.visibility = View.VISIBLE
+          //  binding.radioGroup.visibility = View.GONE
         } else {
-
-            binding.radioGroup.visibility = View.GONE
+            //binding.radioGroup.visibility = View.GONE
         }
         if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
-            //defaultBarcode()
-            setDefaultScanner()
+           // defaultBarcode()
+            //setDefaultScanner()
         }
 
-        binding.radioGroup.setOnCheckedChangeListener { buttonView, selected ->
+ /*       binding.radioGroup.setOnCheckedChangeListener { buttonView, selected ->
             if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
                 if (selected == binding.radioBtn1.getId()) {
-                    isRFIDInit = true
-                    isBarcodeInit = false
-                    deInitScanner()
-                    Thread.sleep(1000)
-                    initReader()
+                    try {
+                        isRFIDInit = true
+                        isBarcodeInit = false
+                        deInitScanner()
+                        Thread.sleep(1000)
+                        initReader()
+                    } catch (e: Exception) {
+
+                    }
+
                 } else if (selected == binding.radioBtn2.getId()) {
 
                     setDefaultScanner()
                 }
-
-
             }
         }
+*/
+    }
 
+
+
+    // Example parser (adapt if you already have one)
+    fun parseStringToList(coordStr: String): ArrayList<LatLng> {
+        val list = ArrayList<LatLng>()
+        val regex = Regex("lat/lng: \\((.*?),(.*?)\\)")
+        regex.findAll(coordStr).forEach {
+            val lat = it.groupValues[1].trim().toDouble()
+            val lng = it.groupValues[2].trim().toDouble()
+            list.add(LatLng(lat, lng))
+        }
+        return list
+    }
+
+    private fun updateUIWithLocation(
+        latitude: Double,
+        longitude: Double,
+        isLocationAvailable: Boolean,
+    ) {
+        if (isLocationAvailable) {
+            val currentLocation = LatLng(latitude, longitude)
+
+            // Check if inside ANY polygon
+            val insideAnyPolygon = allPolygons.any { polygon ->
+                PolyUtil.containsLocation(currentLocation, polygon, false)
+            }
+
+            runOnUiThread {
+                if (insideAnyPolygon) {
+                    binding.indicator.setImageResource(R.drawable.ic_circl_green)
+                } else {
+                    binding.indicator.setImageResource(R.drawable.ic_circl_red)
+                }
+            }
+        } else {
+            runOnUiThread {
+                binding.indicator.setImageResource(R.drawable.ic_circl_red)
+            }
+        }
     }
 
     private fun logout() {
@@ -388,11 +492,16 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     }
 
     private fun defaultBarcode() {
-        isRFIDInit = true
-        isBarcodeInit = false
-        //deInitScanner()
-        Thread.sleep(1000)
-        initReader()
+        try {
+            isRFIDInit = true
+            isBarcodeInit = false
+            //deInitScanner()
+            Thread.sleep(1000)
+            initReader()
+        } catch (e: Exception) {
+
+        }
+
     }
 
     private fun setDefaultScanner() {
@@ -411,6 +520,51 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
             )
         }
     }
+
+    private fun checkPermissions() {
+        val permissions = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        } else {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+
+        if (permissions.isNotEmpty()) {
+            requestPermissions.launch(permissions.toTypedArray())
+        } else {
+            //startBleScan()
+        }
+    }
+
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val granted = permissions.entries.all { it.value }
+            if (granted) {
+                // startBleScan()
+            } else {
+                Toast.makeText(this, "Bluetooth permissions required", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     //////location
     private fun startLocationProviderCheck() {
@@ -479,36 +633,36 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         }
     }
 
-    private fun updateUIWithLocation(
-        latitude: Double,
-        longitude: Double,
-        isLocationAvailable: Boolean
-    ) {
-        // Update your UI elements with the new latitude and longitude values
-        // For example, display them on TextViews or use them in calculations.
-        if (isLocationAvailable) {
+    /*    private fun updateUIWithLocation(
+            latitude: Double,
+            longitude: Double,
+            isLocationAvailable: Boolean,
+        ) {
+            // Update your UI elements with the new latitude and longitude values
+            // For example, display them on TextViews or use them in calculations.
+            if (isLocationAvailable) {
 
-            if (PolyUtil.containsLocation(LatLng(latitude, longitude), coordinates, false)) {
-                runOnUiThread {
-                    binding.indicator.setImageResource(R.drawable.ic_circl_green)
+                if (PolyUtil.containsLocation(LatLng(latitude, longitude), coordinates, false)) {
+                    runOnUiThread {
+                        binding.indicator.setImageResource(R.drawable.ic_circl_green)
+                    }
+                } else {
+                    runOnUiThread {
+                        binding.indicator.setImageResource(R.drawable.ic_circl_red)
+                    }
                 }
             } else {
                 runOnUiThread {
                     binding.indicator.setImageResource(R.drawable.ic_circl_red)
                 }
             }
-        } else {
-            runOnUiThread {
-                binding.indicator.setImageResource(R.drawable.ic_circl_red)
-            }
-        }
-    }
+        }*/
 
     // Handle permission request result
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -521,19 +675,19 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         }
     }
 
-    fun parseStringToList(inputString: String): ArrayList<LatLng> {
-        val regex = Regex("\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)")
-        val matches = regex.findAll(inputString)
-        val latLngList = ArrayList<LatLng>()
-        for (match in matches) {
-            val (latitudeStr, longitudeStr) = match.destructured
-            val latitude = latitudeStr.toDouble()
-            val longitude = longitudeStr.toDouble()
-            val latLng = LatLng(latitude, longitude)
-            latLngList.add(latLng)
-        }
-        return latLngList
-    }
+    /*    fun parseStringToList(inputString: String): ArrayList<LatLng> {
+            val regex = Regex("\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)")
+            val matches = regex.findAll(inputString)
+            val latLngList = ArrayList<LatLng>()
+            for (match in matches) {
+                val (latitudeStr, longitudeStr) = match.destructured
+                val latitude = latitudeStr.toDouble()
+                val longitude = longitudeStr.toDouble()
+                val latLng = LatLng(latitude, longitude)
+                latLngList.add(latLng)
+            }
+            return latLngList
+        }*/
 
     //viewmodel
     fun confirmVin(vin: String) {
@@ -543,27 +697,36 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
             } else {
                 openLocationSettings()
             }
-            //val vinId = binding.edVinScan.text.toString()
-            if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
-                /* Toasty.success(
-                     this@MainActivity,
-                     "You are inside geofence",
-                     Toasty.LENGTH_SHORT
-                 ).show()*/
+
+            val currentLocation = LatLng(currentLatitude, currentLongitude)
+
+            val insideAnyPolygon = allPolygons.any { polygon ->
+                PolyUtil.containsLocation(currentLocation, polygon, false)
+            }
+            /*      if (containsLocation(LatLng(currentLatitude, currentLongitude), insideAnyPolygon, false)) {
+                      if (vin.isNotEmpty()) {
+                          viewModel.postConfirmDealerVehicleDelivery(
+                              this@MainActivity,
+                              ConfirmDealerVehicleDeliveryRequest(
+                                  "$currentLatitude,$currentLongitude", dealerCode!!,
+                                  "Delivered", userName!!, "", vin,
+                                  locationId!!.toInt()
+                              )
+                          )
+                      }
+                      else {
+                          Toasty.warning(
+                              this@MainActivity,
+                              "please fill the required credentials",
+                              Toasty.LENGTH_SHORT
+                          ).show()
+                      }
+                  } */
+
+            if (insideAnyPolygon) {
                 if (vin.isNotEmpty()) {
-                    /* viewModel.validateVinConfirm(Constants.DMS_BASE_URL,
-                         DMSVehicleConfirmationRequest(dealerCode!!,"Delivered",createUniqueIDWithDateTime(),vin))*/
-                    /*   locationId?.let {
-                           ConfirmDealerVehicleDeliveryRequest("$currentLatitude,$currentLongitude",dealerCode!!,
-                               "Delivered",userName!!,vin,
-                               it.toInt())
-                       }?.let {
-                           viewModel.postConfirmDealerVehicleDelivery (token!!, Constants.BASE_URL_LOCAL,
-                               it
-                           )
-                       }*/
                     viewModel.postConfirmDealerVehicleDelivery(
-                        token!!, baseUrl,
+                        this@MainActivity,
                         ConfirmDealerVehicleDeliveryRequest(
                             "$currentLatitude,$currentLongitude", dealerCode!!,
                             "Delivered", userName!!, "", vin,
@@ -600,20 +763,44 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
               } else {
                   openLocationSettings()
               }*/
-            if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
-                if(dealerCode!=null)
-                {
-                    viewModel.postVerifyDealerVehicle(
-                        token!!,
-                        baseUrl,
-                        VerifyDealerVehicleRequest(data.toString(), "",dealerCode!!)
-                    )
-                    /* viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
-                         GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
+            /*  if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
+                  if (dealerCode != null) {
+                      viewModel.postVerifyDealerVehicle(
+                          this@MainActivity,
+                          VerifyDealerVehicleRequest(data.toString(), "", dealerCode!!)
+                      )
+                      *//* viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
+                         GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*//*
                     runOnUiThread(Runnable {
                         binding.edVinScan.setText(data)
                     })
-                }else {
+                } else {
+                    runOnUiThread(Runnable {
+                        Toasty.warning(
+                            this@MainActivity,
+                            "Dealer Code Not found!!",
+                            Toasty.LENGTH_SHORT
+                        ).show()
+                    })
+
+                }*/
+
+            val currentLocation = LatLng(currentLatitude, currentLongitude)
+
+            val insideAnyPolygon = allPolygons.any { polygon ->
+                PolyUtil.containsLocation(currentLocation, polygon, false)
+            }
+            if (insideAnyPolygon) {
+                if (dealerCode != null) {
+                    viewModel.postVerifyDealerVehicle(
+                        this@MainActivity,
+                        VerifyDealerVehicleRequest(data.toString(), "", dealerCode!!)
+                    )
+
+                    runOnUiThread(Runnable {
+                        binding.edVinScan.setText(data)
+                    })
+                } else {
                     runOnUiThread(Runnable {
                         Toasty.warning(
                             this@MainActivity,
@@ -623,8 +810,6 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
                     })
 
                 }
-
-
             } else {
                 runOnUiThread(Runnable {
                     Toasty.warning(
@@ -649,22 +834,20 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
     fun submitVinRFID(data: String?) {
         try {
-            if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
 
-                if(dealerCode!=null)
-                {
-                    viewModel.postVerifyDealerVehicle(
-                        token!!,
-                        baseUrl,
-                        VerifyDealerVehicleRequest(data.toString(), "",dealerCode!!)
-                    )
-                    /*      viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
-                              GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*/
+            /*   if (containsLocation(LatLng(currentLatitude, currentLongitude), coordinates, false)) {
+
+                   if (dealerCode != null) {
+                       viewModel.postVerifyDealerVehicle(
+                           this@MainActivity,
+                           VerifyDealerVehicleRequest(data.toString(), "", dealerCode!!)
+                       )
+                       *//*      viewModel.getVehicleInformation(Constants.DMS_BASE_URL,
+                              GetVehicleInformationRequest(dealerCode!!,createUniqueIDWithDateTime(),data.toString()))*//*
                     runOnUiThread(Runnable {
                         binding.edVinScan.setText(data)
                     })
-                }
-                else {
+                } else {
                     runOnUiThread(Runnable {
                         Toasty.warning(
                             this@MainActivity,
@@ -675,7 +858,32 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
 
                 }
 
+            }*/
 
+            val currentLocation = LatLng(currentLatitude, currentLongitude)
+
+            val insideAnyPolygon = allPolygons.any { polygon ->
+                PolyUtil.containsLocation(currentLocation, polygon, false)
+            }
+            if (insideAnyPolygon) {
+                if (dealerCode != null) {
+                    viewModel.postVerifyDealerVehicle(
+                        this@MainActivity,
+                        VerifyDealerVehicleRequest(data.toString(), "", dealerCode!!)
+                    )
+                    runOnUiThread(Runnable {
+                        binding.edVinScan.setText(data)
+                    })
+                } else {
+                    runOnUiThread(Runnable {
+                        Toasty.warning(
+                            this@MainActivity,
+                            "Dealer Code Not Found!!",
+                            Toasty.LENGTH_SHORT
+                        ).show()
+                    })
+
+                }
             } else {
                 runOnUiThread(Runnable {
                     Toasty.warning(
@@ -704,7 +912,7 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
         binding.tvVinValue.setText("")
         binding.tvModelCodeValue.setText("")
         binding.tvColorValue.setText("")
-        binding.tvEngineNoValue.setText("")
+        //binding.tvEngineNoValue.setText("")
         ViewCompat.setBackgroundTintList(
             binding.btnSubmit,
             ColorStateList.valueOf(grey)
@@ -739,15 +947,23 @@ class MainActivity : AppCompatActivity(), EMDKManager.EMDKListener, Scanner.Stat
     ///Emdk scanner
     override fun onResume() {
         super.onResume()
-        if (resumeFlag) {
-            resumeFlag = false
-            if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains("Motorola Solutions")) {
-                //initBarcodeManager()
-                //initScanner()
-                initReader()
+        try {
+            if (resumeFlag) {
+                resumeFlag = false
+                if (Build.MANUFACTURER.contains("Zebra Technologies") || Build.MANUFACTURER.contains(
+                        "Motorola Solutions"
+                    )
+                ) {
+                    //initBarcodeManager()
+                    //initScanner()
+                    initReader()
+                }
+
             }
+        } catch (e: Exception) {
 
         }
+
     }
 
     override fun handleTagdata(tagData: Array<TagData>) {

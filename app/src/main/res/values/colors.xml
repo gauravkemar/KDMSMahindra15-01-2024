@@ -53,4 +53,7 @@
     <color name="recent_transaction">#026399</color>
     <color name="barcode_rfid">#F5F5F5</color>
     <color name="rfid">#126D9F</color>
+
+    <color name="lighter_grey_divider">#8C8B8B</color>
+    <color name="enough_grey">#F8F8F8</color>
 </resources>

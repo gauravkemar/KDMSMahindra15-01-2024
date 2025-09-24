@@ -2,6 +2,7 @@ package com.kemarport.kdmsmahindra.view
 
 import android.app.ProgressDialog
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
@@ -40,6 +41,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private var serverHttpPrefText: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         binding = DataBindingUtil.setContentView(this, R.layout.activity_forgot_password)
 
         binding.forgetPasswordToolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.white))
@@ -54,7 +56,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
         userName = userDetails[Constants.KEY_USER_NAME].toString()
         serverIpSharedPrefText = userDetails!![Constants.KEY_SERVER_IP].toString()
         serverHttpPrefText = userDetails!![Constants.KEY_HTTP].toString()
-        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText/service/api/"
+        baseUrl = "$serverHttpPrefText://$serverIpSharedPrefText"
         val kdmsRepository = KDMSRepository()
         val viewModelProviderFactory =
             LoginVMPF(application, kdmsRepository)
@@ -270,7 +272,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
             val validateForgotPassInput = validateForgotPassInput(emailId, userName)
             if (validateForgotPassInput == null) {
                 viewModel.forgotPassword(
-                    baseUrl,
+                    this@ForgotPasswordActivity,
                     ForgotPasswordRequest("", userName)
                 )
             } else {
@@ -297,7 +299,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 validateInput(token, newPassword, confirmPassword)
             if (validateForgotPassInput == null) {
                 viewModel.resetPassword(
-                    baseUrl,
+                    this@ForgotPasswordActivity,
                     ResetPasswordRequest(confirmPassword, newPassword, token)
                 )
             } else {

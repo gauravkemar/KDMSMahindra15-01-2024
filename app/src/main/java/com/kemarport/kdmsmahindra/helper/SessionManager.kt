@@ -2,7 +2,11 @@ package com.kemarport.kdmsmahindra.helper
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.kemarport.kdmsmahindra.model.login.DealerCoordinate
 import com.kemarport.mahindrakiosk.helper.Constants
+import com.kemarport.mahindrakiosk.helper.Constants.DEALER_COORDINATES
 import com.kemarport.mahindrakiosk.helper.Constants.KEY_HTTP
 import com.kemarport.mahindrakiosk.helper.Constants.KEY_SERVER_IP
 
@@ -35,10 +39,11 @@ class SessionManager(context: Context) {
         userName: String?,
         jwtToken: String?,
         refreshToken: String?,
-        roleName:String?,
-        dealerCode:String?,
-        coordinates:String?,
-        locationId:String?
+        roleName: String?,
+        dealerCode: String?,
+        coordinates: String?,
+        locationId: String?,
+        dealerName: String
     ) {
 
         //editor.putString(KEY_USERID, userId)
@@ -59,6 +64,7 @@ class SessionManager(context: Context) {
         editor.putString(Constants.KEY_JWT_TOKEN, jwtToken)
         editor.putString(Constants.KEY_REFRESH_TOKEN, refreshToken)
         editor.putString(Constants.ROLE_NAME, roleName)
+        editor.putString(Constants.KEY_DEALER_NAME, dealerName)
 
         // commit changes
         editor.commit()
@@ -150,6 +156,34 @@ class SessionManager(context: Context) {
         //Admin Shared Prefs
 
         const val KEY_PORT = "port"
+    }
+
+    fun saveDealerCoordinates(context: Context, dealerCoordinates: List<DealerCoordinate>) {
+        val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val gson = Gson()
+        // Save only those with coordinates != null
+        val filteredList = dealerCoordinates.filter { it.coordinates != null }
+        val json = gson.toJson(filteredList)
+        editor.putString(DEALER_COORDINATES, json)
+        editor.apply()
+    }
+
+    fun getDealerCoordinates(context: Context): List<DealerCoordinate>? {
+        val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val gson = Gson()
+        val json = sharedPreferences.getString(DEALER_COORDINATES, null)
+        return if (json != null) {
+            val type = object : TypeToken<List<DealerCoordinate>>() {}.type
+            gson.fromJson(json, type)
+        } else {
+            null
+        }
+    }
+
+    fun clearDealerCoordinates(context: Context) {
+        val sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().remove(DEALER_COORDINATES).apply()
     }
 
 }

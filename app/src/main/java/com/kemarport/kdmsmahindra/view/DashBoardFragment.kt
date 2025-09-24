@@ -71,21 +71,35 @@ class DashBoardFragment : Fragment() {
                 is Resource.Success -> {
                     binding.homeSwipeRefresh.isRefreshing=false
                     response.data?.let {
-                        binding.tvRfidValue.text = "${it.rfid}"
-                        binding.tvBarcodeValue.text = "${it.scans}/${it.maxScans}"
+                        try {
+                            binding.tvRfidValue.text = "${it.rfid}"
+                            binding.tvBarcodeValue.text = "${it.scans}/${it.maxScans}"
+                        }
+                        catch (e:Exception)
+                        {
+
+                        }
+
                     }
                 }
 
                 is Resource.Error -> {
                     Log.d(TAG, "onCreate: rfid ${response.message}")
                     binding.homeSwipeRefresh.isRefreshing=false
-                    if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
+                /*    if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
                         response.message == Constants.CONFIG_ERROR) {
                         (requireActivity() as MainActivity).showCustomDialog(
                             "Session Expired",
                             "Please re-login to continue"
                         )
+                    }*/
+                    response.message?.let { errorMessage ->
+                        Toasty.error(
+                            requireContext(),
+                            "Error Message: $errorMessage"
+                        ).show()
                     }
+
                 }
 
                 is Resource.Loading -> {
@@ -100,13 +114,13 @@ class DashBoardFragment : Fragment() {
                     binding.homeSwipeRefresh.isRefreshing=false
                     hideTableProgressBar()
                     response.message?.let { errorMessage ->
-                        if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
+                      /*  if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
                             response.message == Constants.CONFIG_ERROR) {
                             (requireActivity() as MainActivity).showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
                             )
-                        }
+                        }*/
                         Toasty.error(
                             requireContext(),
                             "Error Message: $errorMessage"
@@ -135,21 +149,28 @@ class DashBoardFragment : Fragment() {
                     binding.homeSwipeRefresh.isRefreshing=false
                     vehicleDataList.clear()
                     response.data?.let {
-                        vehicleDataList.addAll(it)
-                        setDashboardGraphList(vehicleDataList)
+                        try {
+                            vehicleDataList.addAll(it)
+                            setDashboardGraphList(vehicleDataList)
+                        }
+                        catch (e:Exception)
+                        {
+
+                        }
+
                     }
                 }
                 is Resource.Error -> {
                     binding.homeSwipeRefresh.isRefreshing=false
                     hideGraphProgressBar()
                     response.message?.let { errorMessage ->
-                        if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
+                   /*     if (response.message == "Session Expired ! Please relogin" || response.message == "Authentication token expired" ||
                             response.message == Constants.CONFIG_ERROR) {
                             (requireActivity() as MainActivity).showCustomDialog(
                                 "Session Expired",
                                 "Please re-login to continue"
                             )
-                        }
+                        }*/
                         Toasty.error(
                             requireContext(),
                             "Error Message: $errorMessage"
@@ -178,9 +199,9 @@ class DashBoardFragment : Fragment() {
     }
     private fun callApi(){
         try {
-            viewModel.getVehicleConfirmation(token!!,Constants.BASE_URL_LOCAL, dealerCode!!, 7)
-            viewModel.getVehicleConfirmationCount(token!!,Constants.BASE_URL_LOCAL, dealerCode!!, 7)
-            viewModel.getRFIDCount(token!!,Constants.BASE_URL_LOCAL, dealerCode!!)
+            viewModel.getVehicleConfirmation( requireActivity(),dealerCode!!, 7)
+            viewModel.getVehicleConfirmationCount( requireActivity(),dealerCode!!, 7)
+            viewModel.getRFIDCount(requireActivity(),dealerCode!!)
         }
         catch (e:Exception)
         {
@@ -320,10 +341,10 @@ class DashBoardFragment : Fragment() {
         val adapter = MyDialogAdapter(list) { item ->
             if (barChart) {
                 binding.tvSelectPeriodBarchart.text = "Period $item"
-                viewModel.getVehicleConfirmation(token!!,Constants.BASE_URL_LOCAL, dealerCode!!, item)
+                viewModel.getVehicleConfirmation(requireActivity(),dealerCode!!, item)
             } else {
                 binding.tvSelectPeriod.text = "Period $item"
-                viewModel.getVehicleConfirmationCount(token!!,Constants.BASE_URL_LOCAL, dealerCode!!, item)
+                viewModel.getVehicleConfirmationCount( requireActivity(),dealerCode!!, item)
             }
             alertDialog.dismiss()
         }
